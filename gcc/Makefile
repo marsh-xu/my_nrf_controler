@@ -41,6 +41,11 @@ C_SOURCE_FILES += \
 ../components/drivers_nrf/hal/nrf_delay.c \
 ../components/ble/common/ble_srv_common.c \
 ../components/toolchain/system_nrf51.c \
+../components/libraries/timer/app_timer.c \
+../components/drivers_nrf/pstorage/pstorage.c \
+../components/ble/ble_advertising/ble_advertising.c \
+../components/ble/common/ble_advdata.c \
+../components/ble/common/ble_conn_params.c \
 ../components/softdevice/common/softdevice_handler/softdevice_handler.c \
 ../src/app/main.c \
 ../src/app/system_init.c \
@@ -88,7 +93,7 @@ CFLAGS += -DBOARD_PCA10028
 CFLAGS += -DBLE_STACK_SUPPORT_REQD
 CFLAGS += -mcpu=cortex-m0
 CFLAGS += -mthumb -mabi=aapcs --std=gnu99
-CFLAGS += -Wall -Werror -O3 -g3
+CFLAGS += -Wall -Werror -O3 -g
 CFLAGS += -mfloat-abi=soft
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
@@ -211,5 +216,5 @@ flash_all:
 	nrfjprog --program ../components/softdevice/s110/hex/s110_softdevice.hex
 	#nrfjprog --program s110_nrf51822_7.1.0_softdevice.hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/nrf51822_xxaa_s110.hex
-	#nrfjprog --memwr 0x10001000 --val 0x18000
+	nrfjprog --memwr 0x10001000 --val 0x18000
 	nrfjprog -r
