@@ -5,4 +5,5 @@
 *.swp
 *.orig
 *.pyc
-gcc/_build/
+central/gcc/_build/
+peripheral/gcc/_build/
