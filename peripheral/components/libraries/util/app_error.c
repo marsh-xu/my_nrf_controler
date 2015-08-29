@@ -23,14 +23,13 @@
 #include "app_error.h"
 #include "compiler_abstraction.h"
 #include "nordic_common.h"
-#ifdef DEBUG
-#include "bsp.h"
+
+#include "SEGGER_RTT.h"
 
 /* global error variables - in order to prevent removal by optimizers */
 uint32_t m_error_code;
 uint32_t m_line_num;
 const uint8_t * m_p_file_name;
-#endif
 
 /**@brief Function for error handling, which is called when an error has occurred.
  *
@@ -48,34 +47,7 @@ const uint8_t * m_p_file_name;
 /*lint -save -e14 */
 __WEAK void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
 {
-    // On assert, the system can only recover with a reset.
-#ifndef DEBUG
+    SEGGER_RTT_printf(0, "Error code = 0x%x,line_num = %d, file = %s\r\n", error_code, line_num, p_file_name);
     NVIC_SystemReset();
-#else
-    
-#ifdef BSP_DEFINES_ONLY 
-    LEDS_ON(LEDS_MASK);
-#else
-    UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_FATAL_ERROR));
-    // This call can be used for debug purposes during application development.
-    // @note CAUTION: Activating this code will write the stack to flash on an error.
-    //                This function should NOT be used in a final product.
-    //                It is intended STRICTLY for development/debugging purposes.
-    //                The flash write will happen EVEN if the radio is active, thus interrupting
-    //                any communication.
-    //                Use with care. Uncomment the line below to use.
-    //ble_debug_assert_handler(error_code, line_num, p_file_name);
-#endif // BSP_DEFINES_ONLY
-
-    m_error_code = error_code;
-    m_line_num = line_num;
-    m_p_file_name = p_file_name;
-
-    UNUSED_VARIABLE(m_error_code);
-    UNUSED_VARIABLE(m_line_num);
-    UNUSED_VARIABLE(m_p_file_name);
-    __disable_irq();
-    while(1) ;
-#endif // DEBUG
 }
 /*lint -restore */

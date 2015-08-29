@@ -55,6 +55,10 @@ C_SOURCE_FILES += \
 ../src/driver/ds18b20.c \
 ../src/driver/motor.c \
 ../src/driver/heat.c \
+../src/rtt/RTT/SEGGER_RTT.c \
+../src/rtt/RTT/SEGGER_RTT_printf.c \
+#../src/rtt/Syscalls/SEGGER_RTT_Syscalls_GCC.c \
+
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = ../components/toolchain/gcc/gcc_startup_nrf51.s
@@ -85,6 +89,7 @@ INC_PATHS += -I../config
 INC_PATHS += -I../src/app
 INC_PATHS += -I../src/gatt
 INC_PATHS += -I../src/driver
+INC_PATHS += -I../src/rtt/RTT
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)

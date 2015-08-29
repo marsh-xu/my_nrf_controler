@@ -18,8 +18,12 @@
  * @ref srvlib_conn_params module.
  */
 
+#include <stdlib.h>
+
 #include <app_error.h>
 #include <nrf_soc.h>
+
+#include "SEGGER_RTT.h"
 
 #include "system_init.h"
 
@@ -36,6 +40,8 @@ static void power_manage(void)
  */
 int main(void)
 {
+    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
+    SEGGER_RTT_printf(0, "App started!  %s\r\n", "Marsh");
     system_init();
 
     // Enter main loop.

@@ -1,8 +1,10 @@
 #include <stdbool.h>
 
+#include "app_error.h"
 #include "nrf_delay.h"
 
 #include "pin_config.h"
+#include "system_error.h"
 
 #include "ds18b20.h"
 
@@ -137,6 +139,14 @@ uint16_t ds18b20_read_temperature(void)
                 temperature = temperature | 0x8000;
             }
         }
+        else
+        {
+            APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+        }
+    }
+    else
+    {
+        APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
     }
 
     return temperature;
