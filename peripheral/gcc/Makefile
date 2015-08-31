@@ -54,6 +54,7 @@ C_SOURCE_FILES += \
 ../src/gatt/mhs_proxy.c \
 ../src/driver/ds18b20.c \
 ../src/driver/motor.c \
+../src/driver/music.c \
 ../src/driver/heat.c \
 ../src/rtt/RTT/SEGGER_RTT.c \
 ../src/rtt/RTT/SEGGER_RTT_printf.c \

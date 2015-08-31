@@ -9,6 +9,7 @@
 
 #include "auto_temp.h"
 #include "motor.h"
+#include "music.h"
 
 #include "mhs_proxy.h"
 
@@ -93,6 +94,12 @@ static uint32_t mhs_control_char_evt_handle(ble_mhs_evt_t *p_evt)
         case BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_OFF:
             motor_off();
             break;
+        case BLE_MHS_CONTROL_CHAR_EVT_SET_MUSIC_CONTROL:
+        {
+            music_control_cmd_t music_cmd = p_evt->evt_params.p_event_data[0];
+            music_control(music_cmd);
+            break;
+        }
         default:
             error_code = NRF_ERROR_INVALID_PARAM;
             break;

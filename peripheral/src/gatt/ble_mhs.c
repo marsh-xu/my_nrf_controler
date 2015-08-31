@@ -279,6 +279,11 @@ uint32_t on_write_for_control_point_characteristic(ble_mhs_t *p_mhs, ble_evt_t *
             case MHS_CMD_CODE_SET_MOTOR_OFF:
                 evt.evt_type.control_char_evt = BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_OFF;
                 break;
+            case MHS_CMD_CODE_SET_MUSIC_CONTROL:
+                evt.evt_type.control_char_evt = BLE_MHS_CONTROL_CHAR_EVT_SET_MUSIC_CONTROL;
+                evt.evt_params.p_event_data = (uint8_t *)&m_mhs_control_point.cmd_value;
+                evt.event_data_len = sizeof(m_mhs_control_point.cmd_value);
+                break;
             default:
                 return NRF_ERROR_INVALID_PARAM;
         }

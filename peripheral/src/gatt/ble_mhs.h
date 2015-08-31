@@ -43,6 +43,7 @@ typedef enum mhs_control_point_cmd_code_e
     MHS_CMD_CODE_SET_MOTOR_CONTROL               = 0x05,
     MHS_CMD_CODE_SET_MOTOR_SPEED                 = 0x06,
     MHS_CMD_CODE_SET_MOTOR_OFF                   = 0x07,
+    MHS_CMD_CODE_SET_MUSIC_CONTROL               = 0x08,
 } mhs_control_point_cmd_code_t;
 
 typedef struct mhs_control_point_cmd_s
@@ -72,6 +73,7 @@ typedef enum ble_mhs_control_char_evt_e
     BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_CONTROL,
     BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_SPEED,
     BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_OFF,
+    BLE_MHS_CONTROL_CHAR_EVT_SET_MUSIC_CONTROL,
 } ble_mhs_control_char_evt_t;
 
 /**@brief Sony Advanced Accessory Host Service event characteristic event type. */
