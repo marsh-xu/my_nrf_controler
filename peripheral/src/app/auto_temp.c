@@ -9,7 +9,7 @@
 
 #include "auto_temp.h"
 
-#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
+#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 
 static app_timer_id_t  m_temperature_detect_timer_id;
 

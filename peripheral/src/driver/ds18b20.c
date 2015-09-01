@@ -6,6 +6,8 @@
 #include "pin_config.h"
 #include "system_error.h"
 
+#include "SEGGER_RTT.h"
+
 #include "ds18b20.h"
 
 /*!< Pulls SDA line high */
@@ -20,7 +22,7 @@
 
 /*!< Configures SDA pin as input  */
 #define DS18B20_SDA_INPUT()  do { \
-        NRF_GPIO->DIRCLR = (1UL << DS18B20_SDA_PIN_NUMBER);  \
+        NRF_GPIO->DIRCLR = (0UL << DS18B20_SDA_PIN_NUMBER);  \
     } while (0)
 
 /*!< Configures SDA pin as output */
@@ -40,9 +42,11 @@ static uint8_t read_one_byte(void)
     {
         DS18B20_SDA_OUTPUT();
         DS18B20_SDA_LOW();
+        nrf_delay_us(1);
         data >>= 1;
         DS18B20_SDA_HIGH();
         DS18B20_SDA_INPUT();
+        nrf_delay_us(5);
         if (1 == DS18B20_SDA_READ())
         {
             data |= 0x80;
@@ -51,7 +55,7 @@ static uint8_t read_one_byte(void)
         {
             // No implementation needed here.
         }
-        nrf_delay_us(30);
+        nrf_delay_us(60);
     }
 
     return data;
@@ -127,7 +131,7 @@ uint16_t ds18b20_read_temperature(void)
             temperature_data_high = read_one_byte();
 
             temperature = (temperature_data_high << 8) | temperature_data_low;
-
+#if 0
             if (temperature < 0xFFF)
             {
                 temperature = temperature * 0.0625 * 10 + 0.5;
@@ -138,15 +142,21 @@ uint16_t ds18b20_read_temperature(void)
                 temperature = temperature * 0.0625 * 10 + 0.5;
                 temperature = temperature | 0x8000;
             }
+#endif
+            //temperature = temperature * 625 / 10000;
+            SEGGER_RTT_printf(0, "temperature = %p\r\n", temperature);
+            SEGGER_RTT_printf(0, "DS18B20 init %s\r\n", "Success");
         }
         else
         {
-            APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+            //APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+            SEGGER_RTT_printf(0, "DS18B20 init %s\r\n", "Failed");
         }
     }
     else
     {
-        APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+        //APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+        SEGGER_RTT_printf(0, "DS18B20 init %s\r\n", "Failed");
     }
 
     return temperature;
