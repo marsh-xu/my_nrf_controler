@@ -77,6 +77,17 @@ static void create_motor_control_timer(void)
 
 void motor_init(void)
 {
+#if 0
+    uint8_t pin = LED_PIN_NUMBER;
+    nrf_gpio_cfg_output(pin);
+    while(1)
+    {
+        nrf_gpio_pin_set(pin);
+        nrf_delay_ms(2000);
+        nrf_gpio_pin_clear(pin);
+        nrf_delay_ms(2000);
+    }
+#endif
     for (uint8_t i = 0; i < MOTOR_NUMBER; i++)
     {
         nrf_gpio_cfg_output(motor_enable_pin[i]);

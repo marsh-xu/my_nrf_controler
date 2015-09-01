@@ -2,9 +2,11 @@
 
 #include "app_error.h"
 #include "nrf_delay.h"
+#include "nrf_gpio.h"
 
 #include "pin_config.h"
 #include "system_error.h"
+#include "SEGGER_RTT.h"
 
 #include "ds18b20.h"
 
@@ -20,7 +22,7 @@
 
 /*!< Configures SDA pin as input  */
 #define DS18B20_SDA_INPUT()  do { \
-        NRF_GPIO->DIRCLR = (1UL << DS18B20_SDA_PIN_NUMBER);  \
+        NRF_GPIO->DIRSET = (0UL << DS18B20_SDA_PIN_NUMBER);  \
     } while (0)
 
 /*!< Configures SDA pin as output */
@@ -126,6 +128,8 @@ uint16_t ds18b20_read_temperature(void)
             temperature_data_low = read_one_byte();
             temperature_data_high = read_one_byte();
 
+            SEGGER_RTT_printf(0, "data_low = %d, data_high = %d\r\n", temperature_data_low, temperature_data_high);
+
             temperature = (temperature_data_high << 8) | temperature_data_low;
 
             if (temperature < 0xFFF)
@@ -141,12 +145,14 @@ uint16_t ds18b20_read_temperature(void)
         }
         else
         {
-            APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+            SEGGER_RTT_printf(0, "ds18b20 init failed!\r\n");
+            //APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
         }
     }
     else
     {
-        APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
+        SEGGER_RTT_printf(0, "ds18b20 init failed!\r\n");
+        //APP_ERROR_CHECK(APP_ERROR_DS18B20_INIT);
     }
 
     return temperature;
