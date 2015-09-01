@@ -20,6 +20,8 @@
 #include "mhs_proxy.h"
 #include "motor.h"
 
+#include "SEGGER_RTT.h"
+
 #include "system_init.h"
 
 #define TX_POWER_LEVEL                   0
@@ -294,6 +296,8 @@ void system_init(void)
 {
     uint32_t err_code;
 
+    SEGGER_RTT_printf(0, "system init %s\r\n", "started");
+
     ble_stack_init();
     timers_init();
 
@@ -307,7 +311,12 @@ void system_init(void)
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 
+    SEGGER_RTT_printf(0, "peripheral init %s\r\n", "started");
+
     motor_init();
+    SEGGER_RTT_printf(0, "motor init %s\r\n", "started");
     heat_control_init();
+    SEGGER_RTT_printf(0, "heat init %s\r\n", "started");
     auto_temperature_init();
+    SEGGER_RTT_printf(0, "auto temp init %s\r\n", "started");
 }
