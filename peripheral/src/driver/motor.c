@@ -114,6 +114,10 @@ void motor_on(motor_control_t motor_control)
     }
 
     m_motor_control_index = motor_control.motor_index;
+    if (m_motor_control_index > 7)
+    {
+        APP_ERROR_CHECK_BOOL(false);
+    }
 
     if (motor_control.motor_direction == MOTOR_DIRECTION_CLOCK)
     {

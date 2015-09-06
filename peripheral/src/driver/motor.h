@@ -33,4 +33,6 @@ void motor_off();
 
 void motor_set_duty_cylce(uint8_t duty_cycle);
 
+void report_motor_duty_cycle(void);
+
 #endif // MOTOR_H_

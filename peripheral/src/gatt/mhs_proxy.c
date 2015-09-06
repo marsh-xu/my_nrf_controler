@@ -70,6 +70,7 @@ static uint32_t mhs_control_char_evt_handle(ble_mhs_evt_t *p_evt)
             report_temperature_threshold();
             break;
         case BLE_MHS_CONTROL_CHAR_EVT_GET_MOTOR_SPEED:
+            report_motor_duty_cycle();
             break;
         case BLE_MHS_CONTROL_CHAR_EVT_SET_TEMP_SHRESHOLD:
         {
@@ -81,17 +82,16 @@ static uint32_t mhs_control_char_evt_handle(ble_mhs_evt_t *p_evt)
         }
         case BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_CONTROL:
         {
-            uint8_t duty_cycle = p_evt->evt_params.p_event_data[0];
-            motor_set_duty_cylce(duty_cycle);
-            //motor_on(MOTOR_INDEX_1, duty_cycle);
-            break;
-        }
-        case BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_SPEED:
-        {
             motor_control_t motor_control;
             memcpy((uint8_t*)&motor_control, (uint8_t*)p_evt->evt_params.p_event_data,
                     sizeof(motor_control_t));
             motor_on(motor_control);
+            break;
+        }
+        case BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_SPEED:
+        {
+            uint8_t duty_cycle = p_evt->evt_params.p_event_data[0];
+            motor_set_duty_cylce(duty_cycle);
             break;
         }
         case BLE_MHS_CONTROL_CHAR_EVT_SET_MOTOR_OFF:

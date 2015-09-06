@@ -11,32 +11,56 @@
 
 #include "auto_temp.h"
 
-#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
+#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(60000, APP_TIMER_PRESCALER)
+
+#define TEMPERATURE_DEFAULT             200
+#define TEMPERATURE_MAX                 100
+#define TEMPERATURE_MIN                 -30
 
 static app_timer_id_t  m_temperature_detect_timer_id;
 
 static int16_t  m_temperature_threshold = 0;
-static int16_t  m_current_temperature   = 0;
+static int16_t  m_current_temperature   = TEMPERATURE_DEFAULT;
+
+static bool temperature_is_good(int16_t temp)
+{
+    bool result = true;
+    if ((temp >= TEMPERATURE_MIN) && (temp <= TEMPERATURE_MAX))
+    {
+        result = true;
+    }
+    else
+    {
+        result = false;
+    }
+
+    return result;
+}
 
 
 static void temperature_detect_timeout_handler(void * p_context)
 {
+    int16_t temp = 0;
     SEGGER_RTT_printf(0, "temperature detect one time! \r\n");
-    m_current_temperature = ds18b20_read_temperature();
+    temp = ds18b20_read_temperature();
 
-
-    if (m_current_temperature < m_temperature_threshold)
+    if (true == temperature_is_good(temp))
     {
-        if (false == heat_is_on())
+        m_current_temperature = temp;
+
+        if (m_current_temperature < m_temperature_threshold)
         {
-            heat_on();
+            if (false == heat_is_on())
+            {
+                heat_on();
+            }
         }
-    }
-    else
-    {
-        if (true == heat_is_on())
+        else
         {
-            heat_off();
+            if (true == heat_is_on())
+            {
+                heat_off();
+            }
         }
     }
 }
@@ -113,6 +137,7 @@ void set_temperature_threshold(int16_t temp_threshold)
 
 void auto_temperature_init(void)
 {
+    temperature_detect_timeout_handler(NULL);
     create_temperature_detect_timer();
     start_temperature_detect_timer();
 }
