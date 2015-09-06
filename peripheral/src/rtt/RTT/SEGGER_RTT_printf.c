@@ -482,7 +482,7 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pPa
 *          s: Print the string pointed to by the argument
 *          p: Print the argument as an 8-digit hexadecimal integer. (Argument shall be a pointer to void.)
 */
-#if 1
+#if 0
 int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...) {
   va_list ParamList;
 
