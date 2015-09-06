@@ -9,7 +9,7 @@ sleep 200
 r
 w4 4001e504 1
 loadbin s110_softdevice.bin                               0x00000000
-loadbin "_build/nrf51822_xxaa_s110.bin"                   0x18000
+loadbin "../peripheral/gcc/_build/nrf51822_xxaa_s110.bin"                   0x18000
 w4 0x10001000 0x18000
 r
 g

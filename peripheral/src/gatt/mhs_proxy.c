@@ -11,6 +11,8 @@
 #include "motor.h"
 #include "music.h"
 
+#include "SEGGER_RTT.h"
+
 #include "mhs_proxy.h"
 
 static ble_mhs_t m_mhs;    /**< Structure used to identify the MHS. */
@@ -62,6 +64,7 @@ static uint32_t mhs_control_char_evt_handle(ble_mhs_evt_t *p_evt)
     switch (p_evt->evt_type.control_char_evt)
     {
         case BLE_MHS_CONTROL_CHAR_EVT_GET_TEMPERATURE:
+            report_current_temperature();
             break;
         case BLE_MHS_CONTROL_CHAR_EVT_GET_TEMP_SHRESHOLD:
             report_temperature_threshold();
@@ -97,6 +100,7 @@ static uint32_t mhs_control_char_evt_handle(ble_mhs_evt_t *p_evt)
         case BLE_MHS_CONTROL_CHAR_EVT_SET_MUSIC_CONTROL:
         {
             music_control_cmd_t music_cmd = p_evt->evt_params.p_event_data[0];
+            SEGGER_RTT_printf(0, "music_cmd = %p\r\n", music_cmd);
             music_control(music_cmd);
             break;
         }

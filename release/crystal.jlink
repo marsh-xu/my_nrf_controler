@@ -1,0 +1,16 @@
+interface swd
+device nrf51822
+speed 50000
+w4 4001e504 2
+w4 4001e50c 1
+sleep 200
+w4 4001e514 1
+sleep 200
+w4 40000100 0
+w4 40000000 1
+sleep 100
+mem32 40000100 1
+mem32 4000040C 1
+r
+g
+q

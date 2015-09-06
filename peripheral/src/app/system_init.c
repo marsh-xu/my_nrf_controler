@@ -19,6 +19,7 @@
 #include "heat.h"
 #include "mhs_proxy.h"
 #include "motor.h"
+#include "music.h"
 
 #include "SEGGER_RTT.h"
 
@@ -56,6 +57,7 @@ static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
  */
 static void on_ble_evt(ble_evt_t * p_ble_evt)
 {
+    uint32_t err_code;
     switch (p_ble_evt->header.evt_id)
             {
         case BLE_GAP_EVT_CONNECTED:
@@ -64,6 +66,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+            APP_ERROR_CHECK(err_code);
             break;
 
         default:
@@ -319,4 +323,6 @@ void system_init(void)
     SEGGER_RTT_printf(0, "heat init %s\r\n", "started");
     auto_temperature_init();
     SEGGER_RTT_printf(0, "auto temp init %s\r\n", "started");
+
+    music_control_init();
 }

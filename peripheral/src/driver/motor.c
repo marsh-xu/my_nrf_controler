@@ -1,6 +1,9 @@
+#include <string.h>
+
 #include "app_timer.h"
-#include "nrf_gpio.h"
+#include "ble_mhs.h"
 #include "nrf_delay.h"
+#include "nrf_gpio.h"
 
 #include "pin_config.h"
 
@@ -138,4 +141,20 @@ void motor_off()
 void motor_set_duty_cylce(uint8_t duty_cycle)
 {
     m_duty_cycle = duty_cycle;
+}
+
+
+void report_motor_duty_cycle(void)
+{
+    uint32_t err_code;
+    mhs_event_t event;
+
+    memset(&event, 0, sizeof(mhs_event_t));
+    event.evt_code       = MHS_EVENT_CODE_MOTOR_SPEED;
+    event.evt_value.buff = (uint8_t *)&m_duty_cycle;
+    event.evt_value.len  = sizeof(m_duty_cycle);
+
+    err_code = mhs_event_characteristic_notify(event);
+
+    APP_ERROR_CHECK(err_code);
 }

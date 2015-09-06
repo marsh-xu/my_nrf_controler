@@ -11,7 +11,7 @@
 
 #include "auto_temp.h"
 
-#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
+#define TEMPERATURE_DETECT_TIMER_INTERVAL APP_TIMER_TICKS(3000, APP_TIMER_PRESCALER)
 
 static app_timer_id_t  m_temperature_detect_timer_id;
 
@@ -21,8 +21,9 @@ static int16_t  m_current_temperature   = 0;
 
 static void temperature_detect_timeout_handler(void * p_context)
 {
+    SEGGER_RTT_printf(0, "temperature detect one time! \r\n");
     m_current_temperature = ds18b20_read_temperature();
-    SEGGER_RTT_printf(0, "Temperature = %d \r\n", m_current_temperature);
+
 
     if (m_current_temperature < m_temperature_threshold)
     {
