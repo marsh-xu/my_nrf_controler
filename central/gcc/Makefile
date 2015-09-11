@@ -43,12 +43,12 @@ C_SOURCE_FILES += \
 ../components/toolchain/system_nrf51.c \
 ../components/libraries/timer/app_timer.c \
 ../components/drivers_nrf/pstorage/pstorage.c \
-../components/ble/ble_advertising/ble_advertising.c \
-../components/ble/common/ble_advdata.c \
-../components/ble/common/ble_conn_params.c \
+../components/ble/ble_db_discovery/ble_db_discovery.c \
 ../components/softdevice/common/softdevice_handler/softdevice_handler.c \
+../components/drivers_nrf/spi_master/spi_master.c \
 ../src/app/main.c \
 ../src/app/system_init.c \
+../src/driver/oled.c \
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = ../components/toolchain/gcc/gcc_startup_nrf51.s
@@ -58,6 +58,7 @@ INC_PATHS += -I../components/libraries/fifo
 INC_PATHS += -I../components/libraries/util
 INC_PATHS += -I../components/ble/device_manager
 INC_PATHS += -I../components/drivers_nrf/uart
+INC_PATHS += -I../components/drivers_nrf/spi_master
 INC_PATHS += -I../components/ble/common
 INC_PATHS += -I../components/libraries/sensorsim
 INC_PATHS += -I../components/drivers_nrf/pstorage
@@ -75,8 +76,10 @@ INC_PATHS += -I../components/libraries/trace
 INC_PATHS += -I../components/ble/ble_services/ble_bas
 INC_PATHS += -I../components/softdevice/common/softdevice_handler
 INC_PATHS += -I../components/ble/ble_services/ble_hrs
+INC_PATHS += -I../components/ble/ble_db_discovery
 INC_PATHS += -I../config
 INC_PATHS += -I../src/app
+INC_PATHS += -I../src/driver
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
@@ -98,6 +101,9 @@ CFLAGS += -mfloat-abi=soft
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -flto -fno-builtin
+
+# Add SPI Master 0 module enable to build flag
+CFLAGS += -DSPI_MASTER_0_ENABLE
 
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
