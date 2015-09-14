@@ -23,6 +23,7 @@
 #include "app_error.h"
 #include "compiler_abstraction.h"
 #include "nordic_common.h"
+#include "uart.h"
 #ifdef DEBUG
 #include "bsp.h"
 
@@ -49,11 +50,17 @@ const uint8_t * m_p_file_name;
 __WEAK void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
 {
     // On assert, the system can only recover with a reset.
+
+    //uart_put_string((uint8_t *)p_file_name);
+    uart_put_uint32(line_num);
+    uart_put_uint32(error_code);
+
+
 #ifndef DEBUG
     NVIC_SystemReset();
 #else
-    
-#ifdef BSP_DEFINES_ONLY 
+
+#ifdef BSP_DEFINES_ONLY
     LEDS_ON(LEDS_MASK);
 #else
     UNUSED_VARIABLE(bsp_indication_set(BSP_INDICATE_FATAL_ERROR));

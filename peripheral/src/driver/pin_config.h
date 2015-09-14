@@ -3,6 +3,8 @@
 
 #define DS18B20_SDA_PIN_NUMBER                 13
 
+#define POWER_CONTROL
+
 #define MOTOR_1_ENABLE_PIN_NUMBER              2
 #define MOTOR_2_ENABLE_PIN_NUMBER              1
 #define MOTOR_3_ENABLE_PIN_NUMBER              4

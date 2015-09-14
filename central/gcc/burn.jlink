@@ -8,9 +8,9 @@ w4 4001e514 1
 sleep 200
 r
 w4 4001e504 1
-loadbin s110_softdevice.bin                               0x00000000
-loadbin "_build/nrf51822_xxaa_s110.bin"                   0x18000
-w4 0x10001000 0x18000
+loadbin s120_softdevice.bin                               0x00000000
+loadbin "_build/nrf51822_xxaa_s120.bin"                   0x1d000
+w4 0x10001000 0x1d000
 r
 g
 q

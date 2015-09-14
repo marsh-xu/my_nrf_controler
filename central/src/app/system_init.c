@@ -2,20 +2,33 @@
  * Copyright (c) 2014 Sony Mobile Communications Inc.
  * All rights, including trade secret rights, reserved.
  */
+#include "uart.h"
+#include "SEGGER_RTT.h"
+#include "pin_config.h"
 
 #include <string.h>
+
+#include "nrf51.h"
+#include "nrf51_bitfields.h"
+#include "nrf_gpio.h"
 
 #include "ble_hci.h"
 #include "app_timer.h"
 #include "ble_db_discovery.h"
+#include "device_manager.h"
 #include "nrf_gpio.h"
 #include "pstorage.h"
 #include "softdevice_handler.h"
 #include "nrf_delay.h"
 
 #include "oled.h"
+#include "mhs_c_proxy.h"
 
 #include "system_init.h"
+
+#define UART_TX_BUF_SIZE           256                                /**< UART TX buffer size. */
+#define UART_RX_BUF_SIZE           1                                  /**< UART RX buffer size. */
+
 
 #define TX_POWER_LEVEL                   0
 
@@ -31,37 +44,273 @@
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT     3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define MIN_CONN_INTERVAL                MSEC_TO_UNITS(100, UNIT_1_25_MS)           /**< Minimum acceptable connection interval (0.4 seconds). */
-#define MAX_CONN_INTERVAL                MSEC_TO_UNITS(120, UNIT_1_25_MS)           /**< Maximum acceptable connection interval (0.65 second). */
-#define SLAVE_LATENCY                    4                                          /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                 MSEC_TO_UNITS(4000, UNIT_10_MS)            /**< Connection supervisory timeout (4 seconds). */
+#define SEC_PARAM_BOND             1                                  /**< Perform bonding. */
+#define SEC_PARAM_MITM             1                                  /**< Man In The Middle protection not required. */
+#define SEC_PARAM_IO_CAPABILITIES  BLE_GAP_IO_CAPS_NONE               /**< No I/O capabilities. */
+#define SEC_PARAM_OOB              0                                  /**< Out Of Band data not available. */
+#define SEC_PARAM_MIN_KEY_SIZE     7                                  /**< Minimum encryption key size. */
+#define SEC_PARAM_MAX_KEY_SIZE     16                                 /**< Maximum encryption key size. */
 
+#define SCAN_INTERVAL              0x00A0                             /**< Determines scan interval in units of 0.625 millisecond. */
+#define SCAN_WINDOW                0x0050                             /**< Determines scan window in units of 0.625 millisecond. */
+
+#define MIN_CONNECTION_INTERVAL    MSEC_TO_UNITS(7.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in millisecond. */
+#define MAX_CONNECTION_INTERVAL    MSEC_TO_UNITS(30, UNIT_1_25_MS)    /**< Determines maximum connection interval in millisecond. */
+#define SLAVE_LATENCY              0                                  /**< Determines slave latency in counts of connection events. */
+#define SUPERVISION_TIMEOUT        MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 millisecond. */
+
+
+#define UUID16_SIZE                2                                  /**< Size of 16 bit UUID */
+
+#define TARGET_UUID                0xFFF0                             /**< Target device name that application is looking for. */
 
 /**< Include or not the service_changed characteristic.
 if not enabled, the server's database cannot be changed for the lifetime of the device*/
 #define IS_SRVC_CHANGED_CHARACT_PRESENT  1
 
-static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
+/**@breif Macro to unpack 16bit unsigned UUID from octet stream. */
+#define UUID16_EXTRACT(DST, SRC) \
+    do                           \
+    {                            \
+        (*(DST))   = (SRC)[1];   \
+        (*(DST)) <<= 8;          \
+        (*(DST))  |= (SRC)[0];   \
+    } while (0)
+
+typedef enum
+{
+    BLE_NO_SCAN,                                                     /**< No advertising running. */
+    BLE_WHITELIST_SCAN,                                              /**< Advertising with whitelist. */
+    BLE_FAST_SCAN,                                                   /**< Fast advertising running. */
+} ble_advertising_mode_t;
+
+/**@brief Variable length data encapsulation in terms of length and pointer to data */
+typedef struct
+{
+    uint8_t     * p_data;                                             /**< Pointer to data. */
+    uint16_t      data_len;                                           /**< Length of data. */
+}data_t;
+
+static bool                         m_memory_access_in_progress = false; /**< Flag to keep track of ongoing operations on persistent memory. */
+static ble_gap_scan_params_t        m_scan_param;                        /**< Scan parameters requested for scanning and connection. */
+//static dm_application_instance_t    m_dm_app_id;                         /**< Application identifier. */
+static uint8_t                      m_scan_mode;
+
+/**
+ * @brief Connection parameters requested for connection.
+ */
+static const ble_gap_conn_params_t m_connection_param =
+{
+    (uint16_t)MIN_CONNECTION_INTERVAL,   // Minimum connection
+    (uint16_t)MAX_CONNECTION_INTERVAL,   // Maximum connection
+    0,                                   // Slave latency
+    (uint16_t)SUPERVISION_TIMEOUT        // Supervision time-out
+};
+
+/**
+ * @brief Parses advertisement data, providing length and location of the field in case
+ *        matching data is found.
+ *
+ * @param[in]  Type of data to be looked for in advertisement data.
+ * @param[in]  Advertisement report length and pointer to report.
+ * @param[out] If data type requested is found in the data report, type data length and
+ *             pointer to data will be populated here.
+ *
+ * @retval NRF_SUCCESS if the data type is found in the report.
+ * @retval NRF_ERROR_NOT_FOUND if the data type could not be found.
+ */
+static uint32_t adv_report_parse(uint8_t type, data_t * p_advdata, data_t * p_typedata)
+{
+    uint32_t  index = 0;
+    uint8_t * p_data;
+
+    p_data = p_advdata->p_data;
+
+    while (index < p_advdata->data_len)
+    {
+        uint8_t field_length = p_data[index];
+        uint8_t field_type   = p_data[index+1];
+
+        if (field_type == type)
+        {
+            p_typedata->p_data   = &p_data[index+2];
+            p_typedata->data_len = field_length-1;
+            return NRF_SUCCESS;
+        }
+        index += field_length + 1;
+    }
+    return NRF_ERROR_NOT_FOUND;
+}
+
+
+/**@breif Function to start scanning.
+ */
+static void scan_start(void)
+{
+    ble_gap_whitelist_t   whitelist;
+    ble_gap_addr_t      * p_whitelist_addr[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
+    ble_gap_irk_t       * p_whitelist_irk[BLE_GAP_WHITELIST_IRK_MAX_COUNT];
+    uint32_t              err_code;
+    uint32_t              count;
+
+    // Verify if there is any flash access pending, if yes delay starting scanning until
+    // it's complete.
+    err_code = pstorage_access_status_get(&count);
+    APP_ERROR_CHECK(err_code);
+
+    if (count != 0)
+    {
+        m_memory_access_in_progress = true;
+        return;
+    }
+
+    // Initialize whitelist parameters.
+    whitelist.addr_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
+    whitelist.irk_count  = 0;
+    whitelist.pp_addrs   = p_whitelist_addr;
+    whitelist.pp_irks    = p_whitelist_irk;
+
+    // Request creating of whitelist.
+    //err_code = dm_whitelist_create(&m_dm_app_id,&whitelist);
+    //APP_ERROR_CHECK(err_code);
+
+    if (((whitelist.addr_count == 0) && (whitelist.irk_count == 0)) ||
+         (m_scan_mode != BLE_WHITELIST_SCAN))
+    {
+        // No devices in whitelist, hence non selective performed.
+        m_scan_param.active       = 0;            // Active scanning set.
+        m_scan_param.selective    = 0;            // Selective scanning not set.
+        m_scan_param.interval     = SCAN_INTERVAL;// Scan interval.
+        m_scan_param.window       = SCAN_WINDOW;  // Scan window.
+        m_scan_param.p_whitelist  = NULL;         // No whitelist provided.
+        m_scan_param.timeout      = 0x0000;       // No timeout.
+    }
+    else
+    {
+        // Selective scanning based on whitelist first.
+        m_scan_param.active       = 0;            // Active scanning set.
+        m_scan_param.selective    = 1;            // Selective scanning not set.
+        m_scan_param.interval     = SCAN_INTERVAL;// Scan interval.
+        m_scan_param.window       = SCAN_WINDOW;  // Scan window.
+        m_scan_param.p_whitelist  = &whitelist;   // Provide whitelist.
+        m_scan_param.timeout      = 0x001E;       // 30 seconds timeout.
+
+        // Set whitelist scanning state.
+        m_scan_mode = BLE_WHITELIST_SCAN;
+    }
+
+    err_code = sd_ble_gap_scan_start(&m_scan_param);
+    APP_ERROR_CHECK(err_code);
+}
 
 
 /**@brief Function for handling the Application's BLE Stack events.
  *
- * @param[in] p_ble_evt  Bluetooth stack event.
+ * @param[in]   p_ble_evt   Bluetooth stack event.
  */
 static void on_ble_evt(ble_evt_t * p_ble_evt)
 {
+    uint32_t                err_code;
+    const ble_gap_evt_t   * p_gap_evt = &p_ble_evt->evt.gap_evt;
+
     switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GAP_EVT_ADV_REPORT:
+        {
+            data_t adv_data;
+            data_t type_data;
+
+            // Initialize advertisement report for parsing.
+            adv_data.p_data = (uint8_t *)p_gap_evt->params.adv_report.data;
+            adv_data.data_len = p_gap_evt->params.adv_report.dlen;
+
+            uint8_t * p;
+            p = (uint8_t*)&(p_gap_evt->params.adv_report.peer_addr);
+            for(int i = 0; i<7; i++)
             {
-        case BLE_GAP_EVT_CONNECTED:
-            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+                uart_put_uint8(*p);
+                p++;
+            }
+
+            err_code = adv_report_parse(BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE,
+                                        &adv_data,
+                                        &type_data);
+
+            if (err_code != NRF_SUCCESS)
+            {
+                // Compare short local name in case complete name does not match.
+                err_code = adv_report_parse(BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE,
+                                            &adv_data,
+                                            &type_data);
+            }
+
+            // Verify if short or complete name matches target.
+            if (err_code == NRF_SUCCESS)
+            {
+                uint16_t extracted_uuid;
+
+                // UUIDs found, look for matching UUID
+                for (uint32_t u_index = 0; u_index < (type_data.data_len/UUID16_SIZE); u_index++)
+                {
+                    UUID16_EXTRACT(&extracted_uuid,&type_data.p_data[u_index * UUID16_SIZE]);
+
+                    //APPL_LOG("\t[APPL]: %x\r\n",extracted_uuid);
+
+                    if(extracted_uuid == TARGET_UUID)
+                    {
+                        // Stop scanning.
+                        err_code = sd_ble_gap_scan_stop();
+
+                        if (err_code != NRF_SUCCESS)
+                        {
+                            //APPL_LOG("[APPL]: Scan stop failed, reason %d\r\n", err_code);
+                        }
+
+                        m_scan_param.selective = 0;
+
+                        // Initiate connection.
+                        err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.\
+                                                       peer_addr,
+                                                       &m_scan_param,
+                                                       &m_connection_param);
+
+                        if (err_code != NRF_SUCCESS)
+                        {
+                            //APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
+                        }
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+
+        case BLE_GAP_EVT_TIMEOUT:
+            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN)
+            {
+                //APPL_LOG("[APPL]: Scan timed out.\r\n");
+                if (m_scan_mode ==  BLE_WHITELIST_SCAN)
+                {
+                    m_scan_mode = BLE_FAST_SCAN;
+
+                    // Start non selective scanning.
+                    scan_start();
+                }
+            }
+            else if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
+            {
+                //APPL_LOG("[APPL]: Connection Request timed out.\r\n");
+            }
             break;
 
-        case BLE_GAP_EVT_DISCONNECTED:
-            m_conn_handle = BLE_CONN_HANDLE_INVALID;
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
+            // Accepting parameters requested by peer.
+            err_code = sd_ble_gap_conn_param_update(p_gap_evt->conn_handle,
+                                                    &p_gap_evt->params.conn_param_update_request.conn_params);
+            APP_ERROR_CHECK(err_code);
             break;
 
         default:
-            // No implementation needed.
             break;
     }
 }
@@ -100,12 +349,12 @@ static void ble_stack_init(void)
     uint32_t err_code;
 
     // Initialize the SoftDevice handler module.
-    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION, NULL);
+    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_RC_250_PPM_250MS_CALIBRATION, NULL);
 
     // Enable BLE stack.
     ble_enable_params_t ble_enable_params;
     memset(&ble_enable_params, 0, sizeof(ble_enable_params));
-    ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
+    ble_enable_params.gap_enable_params.role              = BLE_GAP_ROLE_CENTRAL;
     err_code = sd_ble_enable(&ble_enable_params);
     APP_ERROR_CHECK(err_code);
 
@@ -140,12 +389,25 @@ static void db_discovery_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+#if 0
+static void test_crystal(void)
+{
+    nrf_gpio_cfg_output(11);
+    nrf_gpio_pin_set(11);
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while((NRF_CLOCK->EVENTS_HFCLKSTARTED) == 0);
+    nrf_gpio_pin_clear(11);
+}
+#endif
+
 
 void system_init(void)
 {
     uint32_t err_code;
 
-    oled_init();
+    SEGGER_RTT_printf(0, "system init\r\n");
+
+    //oled_init();
 
     ble_stack_init();
     timers_init();
@@ -155,4 +417,7 @@ void system_init(void)
 
     db_discovery_init();
 
+    mhs_c_init();
+
+    scan_start();
 }

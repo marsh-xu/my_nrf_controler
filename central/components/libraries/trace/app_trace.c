@@ -19,7 +19,7 @@
 #ifdef ENABLE_DEBUG_LOG_SUPPORT
 #include "app_uart.h"
 #include "nordic_common.h"
-#include "boards.h"
+#include "pin_config.h"
 #include "app_trace.h"
 #include "app_error.h"
 
@@ -44,21 +44,21 @@ __WEAK void uart_error_handle(app_uart_evt_t * p_event)
 void app_trace_init(void)
 {
     uint32_t err_code = NRF_SUCCESS;
-    const app_uart_comm_params_t comm_params =  
+    const app_uart_comm_params_t comm_params =
     {
-        RX_PIN_NUMBER, 
-        TX_PIN_NUMBER, 
-        RTS_PIN_NUMBER, 
-        CTS_PIN_NUMBER, 
-        APP_UART_FLOW_CONTROL_DISABLED, 
-        false, 
+        RX_PIN_NUMBER,
+        TX_PIN_NUMBER,
+        RTS_PIN_NUMBER,
+        CTS_PIN_NUMBER,
+        APP_UART_FLOW_CONTROL_DISABLED,
+        false,
         UART_BAUDRATE_BAUDRATE_Baud115200
-    }; 
-        
-    APP_UART_FIFO_INIT(&comm_params, 
-                       UART_RX_BUF_SIZE, 
-                       UART_TX_BUF_SIZE, 
-                       uart_error_handle, 
+    };
+
+    APP_UART_FIFO_INIT(&comm_params,
+                       UART_RX_BUF_SIZE,
+                       UART_TX_BUF_SIZE,
+                       uart_error_handle,
                        APP_IRQ_PRIORITY_LOW,
                        err_code);
     UNUSED_VARIABLE(err_code);

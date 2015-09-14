@@ -42,13 +42,23 @@ C_SOURCE_FILES += \
 ../components/ble/common/ble_srv_common.c \
 ../components/toolchain/system_nrf51.c \
 ../components/libraries/timer/app_timer.c \
+../components/libraries/gpiote/app_gpiote.c \
 ../components/drivers_nrf/pstorage/pstorage.c \
 ../components/ble/ble_db_discovery/ble_db_discovery.c \
+../components/ble/device_manager/device_manager_central.c \
 ../components/softdevice/common/softdevice_handler/softdevice_handler.c \
 ../components/drivers_nrf/spi_master/spi_master.c \
+../components/drivers_nrf/uart/app_uart.c \
+../components/libraries/trace/app_trace.c \
 ../src/app/main.c \
 ../src/app/system_init.c \
+../src/gatt/ble_mhs_c.c \
+../src/gatt/mhs_c_proxy.c \
 ../src/driver/oled.c \
+../src/driver/uart.c \
+../src/driver/power_control.c \
+../src/rtt/RTT/SEGGER_RTT.c \
+../src/rtt/RTT/SEGGER_RTT_printf.c \
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = ../components/toolchain/gcc/gcc_startup_nrf51.s
@@ -67,19 +77,22 @@ INC_PATHS += -I../components/device
 INC_PATHS += -I../components/libraries/button
 INC_PATHS += -I../components/libraries/timer
 INC_PATHS += -I../components/libraries/gpiote
-INC_PATHS += -I../components/softdevice/s110/headers
+INC_PATHS += -I../components/softdevice/s120/headers
 INC_PATHS += -I../components/drivers_nrf/hal
 INC_PATHS += -I../components/toolchain/gcc
 INC_PATHS += -I../components/toolchain
 INC_PATHS += -I../components/ble/ble_advertising
 INC_PATHS += -I../components/libraries/trace
 INC_PATHS += -I../components/ble/ble_services/ble_bas
+INC_PATHS += -I../components/ble/device_manager
 INC_PATHS += -I../components/softdevice/common/softdevice_handler
 INC_PATHS += -I../components/ble/ble_services/ble_hrs
 INC_PATHS += -I../components/ble/ble_db_discovery
 INC_PATHS += -I../config
 INC_PATHS += -I../src/app
 INC_PATHS += -I../src/driver
+INC_PATHS += -I../src/gatt
+INC_PATHS += -I../src/rtt/RTT
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)
@@ -105,6 +118,9 @@ CFLAGS += -flto -fno-builtin
 # Add SPI Master 0 module enable to build flag
 CFLAGS += -DSPI_MASTER_0_ENABLE
 
+# Enable the debug function
+CFLAGS += -DENABLE_DEBUG_LOG_SUPPORT
+
 # keep every function in separate section. This will allow linker to dump unused functions
 LDFLAGS += -Xlinker -Map=$(LISTING_DIRECTORY)/$(OUTPUT_FILENAME).map
 LDFLAGS += -mthumb -mabi=aapcs -L $(TEMPLATE_PATH) -T$(LINKER_SCRIPT)
@@ -122,17 +138,17 @@ ASMFLAGS += -DS110
 ASMFLAGS += -DBOARD_PCA10028
 ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
 #default target - first one defined
-default: clean nrf51822_xxaa_s110
+default: clean nrf51822_xxaa_s120
 
 #building all targets
 all: clean
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
-	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf51822_xxaa_s110
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf51822_xxaa_s120
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo 	nrf51822_xxaa_s110
+	@echo 	nrf51822_xxaa_s120
 	@echo 	flash_softdevice
 
 
@@ -149,9 +165,9 @@ vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
-nrf51822_xxaa_s110: OUTPUT_FILENAME := nrf51822_xxaa_s110
-nrf51822_xxaa_s110: LINKER_SCRIPT=armgcc_s110_nrf51822_xxaa.ld
-nrf51822_xxaa_s110: $(BUILD_DIRECTORIES) $(OBJECTS)
+nrf51822_xxaa_s120: OUTPUT_FILENAME := nrf51822_xxaa_s120
+nrf51822_xxaa_s120: LINKER_SCRIPT=armgcc_s120_nrf51822_xxaa.ld
+nrf51822_xxaa_s120: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
@@ -211,16 +227,16 @@ cleanobj:
 	$(RM) $(BUILD_DIRECTORIES)/*.o
 
 flash: $(MAKECMDGOALS)
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/nrf51822_xxaa_s110.hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/nrf51822_xxaa_s120.hex
 
 ## Flash softdevice
 flash_softdevice:
-	nrfjprog --program ../components/softdevice/s110/hex/s110_softdevice.hex
+	nrfjprog --program ../components/softdevice/s120/hex/s120_softdevice.hex
 
 flash_all:
 	nrfjprog --eraseall
-	nrfjprog --program ../components/softdevice/s110/hex/s110_softdevice.hex
-	#nrfjprog --program s110_nrf51822_7.1.0_softdevice.hex
-	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/nrf51822_xxaa_s110.hex
+	nrfjprog --program ../components/softdevice/s120/hex/s120_softdevice.hex
+	#nrfjprog --program s120_nrf51822_7.1.0_softdevice.hex
+	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/nrf51822_xxaa_s120.hex
 	nrfjprog --memwr 0x10001000 --val 0x18000
 	nrfjprog -r

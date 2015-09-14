@@ -20,8 +20,12 @@
 
 #include <app_error.h>
 #include <nrf_soc.h>
+#include "nrf_delay.h"
+
+#include "uart.h"
 
 #include "system_init.h"
+#include "power_control.h"
 
 /**@brief Function for the Power manager.
  */
@@ -31,17 +35,21 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
 /**@brief Function for application main entry.
  */
 int main(void)
 {
+    power_control_enable(true);
+
+    uart_init();
+    uart_put_uint8(0xAA);
+
     system_init();
 
     // Enter main loop.
     for (;;)
     {
-        power_manage();
+        //power_manage();
     }
 }
 
