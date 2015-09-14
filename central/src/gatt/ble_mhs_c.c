@@ -75,6 +75,18 @@ static void tx_buffer_process(void)
 }
 
 
+/**@brief     Function for handling write response events.
+ *
+ * @param[in] p_ble_mhs_c Pointer to the Heart Rate Client structure.
+ * @param[in] p_ble_evt   Pointer to the BLE event received.
+ */
+static void on_write_rsp(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
+{
+    // Check if there is any message to be sent across to the peer and send it.
+    tx_buffer_process();
+}
+
+
 /**@brief     Function for handling events from the database discovery module.
  *
  * @details   This function will handle an event from the database discovery module, and determine
@@ -117,6 +129,62 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
         evt.evt_type = BLE_MHS_C_EVT_DISCOVERY_COMPLETE;
 
         mp_ble_mhs_c->evt_handler(mp_ble_mhs_c, &evt);
+    }
+}
+
+
+/**@brief     Function for handling Handle Value Notification received from the SoftDevice.
+ *
+ * @details   This function will uses the Handle Value Notification received from the SoftDevice
+ *            and checks if it is a notification of the heart rate measurement from the peer. If
+ *            it is, this function will decode the heart rate measurement and send it to the
+ *            application.
+ *
+ * @param[in] p_ble_mhs_c Pointer to the Heart Rate Client structure.
+ * @param[in] p_ble_evt   Pointer to the BLE event received.
+ */
+static void on_hvx(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
+{
+    // Check if this is a heart rate notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_mhs_c->hrm_handle)
+    {
+        ble_mhs_c_evt_t ble_mhs_c_evt;
+        uint32_t        index = 0;
+
+        ble_mhs_c_evt.evt_type = BLE_MHS_C_EVT_NOTIFICATION;
+
+        ble_mhs_c_evt.mhs_evt_type = p_ble_evt->evt.gattc_evt.params.hvx.data[index++];
+
+        ble_mhs_c_evt.mhs_evt_type = uint16_decode(&(p_ble_evt->evt.gattc_evt.params.hvx.data[index]));
+
+        p_ble_mhs_c->evt_handler(p_ble_mhs_c, &ble_mhs_c_evt);
+    }
+}
+
+
+void ble_mhs_c_on_ble_evt(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
+{
+    if ((p_ble_mhs_c == NULL) || (p_ble_evt == NULL))
+    {
+        return;
+    }
+
+    switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GAP_EVT_CONNECTED:
+            p_ble_mhs_c->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            break;
+
+        case BLE_GATTC_EVT_HVX:
+            on_hvx(p_ble_mhs_c, p_ble_evt);
+            break;
+
+        case BLE_GATTC_EVT_WRITE_RSP:
+            on_write_rsp(p_ble_mhs_c, p_ble_evt);
+            break;
+
+        default:
+            break;
     }
 }
 

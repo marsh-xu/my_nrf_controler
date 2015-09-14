@@ -21,6 +21,7 @@
 #include "softdevice_handler.h"
 #include "nrf_delay.h"
 
+#include "ble_mhs_c.h"
 #include "oled.h"
 #include "mhs_c_proxy.h"
 
@@ -54,8 +55,8 @@
 #define SCAN_INTERVAL              0x00A0                             /**< Determines scan interval in units of 0.625 millisecond. */
 #define SCAN_WINDOW                0x0050                             /**< Determines scan window in units of 0.625 millisecond. */
 
-#define MIN_CONNECTION_INTERVAL    MSEC_TO_UNITS(7.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in millisecond. */
-#define MAX_CONNECTION_INTERVAL    MSEC_TO_UNITS(30, UNIT_1_25_MS)    /**< Determines maximum connection interval in millisecond. */
+#define MIN_CONNECTION_INTERVAL    MSEC_TO_UNITS(70, UNIT_1_25_MS)   /**< Determines minimum connection interval in millisecond. */
+#define MAX_CONNECTION_INTERVAL    MSEC_TO_UNITS(100, UNIT_1_25_MS)    /**< Determines maximum connection interval in millisecond. */
 #define SLAVE_LATENCY              0                                  /**< Determines slave latency in counts of connection events. */
 #define SUPERVISION_TIMEOUT        MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 millisecond. */
 
@@ -95,6 +96,8 @@ static bool                         m_memory_access_in_progress = false; /**< Fl
 static ble_gap_scan_params_t        m_scan_param;                        /**< Scan parameters requested for scanning and connection. */
 //static dm_application_instance_t    m_dm_app_id;                         /**< Application identifier. */
 static uint8_t                      m_scan_mode;
+
+static ble_db_discovery_t           m_ble_db_discovery;
 
 /**
  * @brief Connection parameters requested for connection.
@@ -215,6 +218,21 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
     switch (p_ble_evt->header.evt_id)
     {
+        case BLE_GAP_EVT_CONNECTED:
+        {
+            err_code = ble_db_discovery_start(&m_ble_db_discovery,
+                                              p_ble_evt->evt.gap_evt.conn_handle);
+            APP_ERROR_CHECK(err_code);
+            err_code = ble_mhs_c_evt_notif_enable(get_mhs_obj());
+            APP_ERROR_CHECK(err_code);
+            uart_put_uint32(0xCCDD0000);
+            break;
+        }
+        case BLE_GAP_EVT_DISCONNECTED:
+        {
+            scan_start();
+            break;
+        }
         case BLE_GAP_EVT_ADV_REPORT:
         {
             data_t adv_data;
@@ -223,14 +241,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             // Initialize advertisement report for parsing.
             adv_data.p_data = (uint8_t *)p_gap_evt->params.adv_report.data;
             adv_data.data_len = p_gap_evt->params.adv_report.dlen;
-
-            uint8_t * p;
-            p = (uint8_t*)&(p_gap_evt->params.adv_report.peer_addr);
-            for(int i = 0; i<7; i++)
-            {
-                uart_put_uint8(*p);
-                p++;
-            }
 
             err_code = adv_report_parse(BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE,
                                         &adv_data,
@@ -273,6 +283,9 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                                                        peer_addr,
                                                        &m_scan_param,
                                                        &m_connection_param);
+
+                        uart_put_uint32(0xDEADBEEF);
+                        uart_put_uint32(err_code);
 
                         if (err_code != NRF_SUCCESS)
                         {
@@ -324,6 +337,8 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
+    ble_db_discovery_on_ble_evt(&m_ble_db_discovery, p_ble_evt);
+    ble_mhs_c_on_ble_evt(get_mhs_obj(), p_ble_evt);
     on_ble_evt(p_ble_evt);
 }
 
@@ -388,17 +403,6 @@ static void db_discovery_init(void)
 
     APP_ERROR_CHECK(err_code);
 }
-
-#if 0
-static void test_crystal(void)
-{
-    nrf_gpio_cfg_output(11);
-    nrf_gpio_pin_set(11);
-    NRF_CLOCK->TASKS_HFCLKSTART = 1;
-    while((NRF_CLOCK->EVENTS_HFCLKSTARTED) == 0);
-    nrf_gpio_pin_clear(11);
-}
-#endif
 
 
 void system_init(void)

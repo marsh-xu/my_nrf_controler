@@ -47,3 +47,9 @@ void mhs_c_init(void)
     uint32_t err_code = ble_mhs_c_init(&m_ble_mhs_c, &mhs_c_init_obj);
     APP_ERROR_CHECK(err_code);
 }
+
+
+ble_mhs_c_t* get_mhs_obj(void)
+{
+    return &m_ble_mhs_c;
+}

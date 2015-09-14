@@ -2,6 +2,7 @@
 #define BLE_MHS_C_H_
 
 #include <stdint.h>
+#include <ble.h>
 
 #define BLE_UUID_MHS_SERVICE                                     0x0200
 #define BLE_UUID_MHS_CONTROL_POINT_CHAR                          0x0201
@@ -17,10 +18,8 @@ typedef enum
 typedef struct
 {
     ble_mhs_c_evt_type_t evt_type;  /**< Type of the event. */
-    union
-    {
-        uint32_t hrm;  /**< Heart rate measurement received. This will be filled if the evt_type is @ref BLE_HRS_C_EVT_HRM_NOTIFICATION. */
-    } params;
+    uint8_t mhs_evt_type;
+    uint16_t mhs_evt_data;
 } ble_mhs_c_evt_t;
 
 /** @} */
@@ -59,6 +58,8 @@ typedef struct
 uint32_t ble_mhs_c_init(ble_mhs_c_t * p_ble_mhs_c, ble_mhs_c_init_t * p_ble_mhs_c_init);
 
 uint32_t ble_mhs_c_evt_notif_enable(ble_mhs_c_t * p_ble_mhs_c);
+
+void ble_mhs_c_on_ble_evt(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt);
 
 
 #endif // BLE_MHS_C_H_
