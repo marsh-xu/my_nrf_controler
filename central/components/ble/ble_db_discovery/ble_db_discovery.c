@@ -17,6 +17,8 @@
 #include "app_trace.h"
 #include "nordic_common.h"
 
+#include "uart.h"
+
 #define SRV_DISC_START_HANDLE  0x0001                    /**< The start handle value used during service discovery. */
 #define DB_DISCOVERY_MAX_USERS BLE_DB_DISCOVERY_MAX_SRV  /**< The maximum number of users/registrations allowed by this module. */
 #define DB_LOG                 app_trace_log             /**< A debug logger macro that can be used in this file to do logging information over UART. */
@@ -106,7 +108,7 @@ static void pending_user_evts_send(void)
         // Pass the event to the corresponding event handler.
         m_pending_user_evts[i].evt_handler(&(m_pending_user_evts[i].evt));
     }
-    
+
     m_pending_usr_evt_index = 0;
 }
 
@@ -295,8 +297,8 @@ static void on_srv_disc_completion(ble_db_discovery_t * p_db_discovery)
  * @param[in] p_db_discovery The pointer to the DB Discovery structure.
  * @param[in] p_after_char   The pointer to the last discovered characteristic.
  *
- * @retval    True if a characteristic discovery is required. 
- * @retval    False if a characteristic discovery is NOT required.  
+ * @retval    True if a characteristic discovery is required.
+ * @retval    False if a characteristic discovery is NOT required.
  */
 static bool is_char_discovery_reqd(ble_db_discovery_t * const p_db_discovery,
                                    ble_gattc_char_t         * p_after_char)
@@ -311,7 +313,7 @@ static bool is_char_discovery_reqd(ble_db_discovery_t * const p_db_discovery,
         // present. Hence a characteristic discovery is required.
         return true;
     }
-    
+
     return false;
 }
 
@@ -321,7 +323,7 @@ static bool is_char_discovery_reqd(ble_db_discovery_t * const p_db_discovery,
  * @details    This function finds out if there is a possibility of existence of descriptors between
  *             current characteristic and the next characteristic. If so, this function will compute
  *             the handle range on which the descriptors may be present and will return it.
- *             If the current characteristic is the last known characteristic, then this function 
+ *             If the current characteristic is the last known characteristic, then this function
  *             will use the service end handle to find out if the current characteristic can have
  *             descriptors.
  *
@@ -356,7 +358,7 @@ static bool is_desc_discovery_reqd(ble_db_discovery_t       * p_db_discovery,
         }
 
         p_handle_range->start_handle = p_curr_char->characteristic.handle_value + 1;
-        
+
         // Since the current characteristic is the last characteristic in the service, the end
         // handle should be the end handle of the service.
         p_handle_range->end_handle =
@@ -444,7 +446,7 @@ static uint32_t descriptors_discover(ble_db_discovery_t * const p_db_discovery,
     ble_gattc_handle_range_t   handle_range;
     ble_db_discovery_char_t  * p_curr_char_being_discovered;
     ble_db_discovery_srv_t   * p_srv_being_discovered;
-    bool                       is_discovery_reqd = false;    
+    bool                       is_discovery_reqd = false;
 
     p_srv_being_discovered = &(p_db_discovery->services[p_db_discovery->curr_srv_ind]);
 
@@ -568,7 +570,7 @@ static void on_characteristic_discovery_rsp(ble_db_discovery_t * const    p_db_d
 {
     uint32_t                 err_code;
     ble_db_discovery_srv_t * p_srv_being_discovered;
-    bool                     perform_desc_discov = false;    
+    bool                     perform_desc_discov = false;
 
     p_srv_being_discovered = &(p_db_discovery->services[p_db_discovery->curr_srv_ind]);
 
@@ -581,7 +583,7 @@ static void on_characteristic_discovery_rsp(ble_db_discovery_t * const    p_db_d
         // Find out the number of characteristics that were previously discovered (in earlier
         // characteristic discovery responses, if any).
         uint8_t num_chars_prev_disc = p_srv_being_discovered->char_count;
-        
+
         // Find out the number of characteristics that are currently discovered (in the
         // characteristic discovery response being handled).
         uint8_t num_chars_curr_disc = p_char_disc_rsp_evt->count;
@@ -609,9 +611,9 @@ static void on_characteristic_discovery_rsp(ble_db_discovery_t * const    p_db_d
 
             p_srv_being_discovered->charateristics[i].cccd_handle = BLE_GATT_HANDLE_INVALID;
         }
-        
+
         ble_gattc_char_t * p_last_known_char;
-        
+
         p_last_known_char = &(p_srv_being_discovered->charateristics[i - 1].characteristic);
 
         // If no more characteristic discovery is required, or if the maximum number of supported
@@ -843,12 +845,15 @@ uint32_t ble_db_discovery_start(ble_db_discovery_t * const p_db_discovery,
     p_srv_being_discovered = &(p_db_discovery->services[p_db_discovery->curr_srv_ind]);
 
     p_srv_being_discovered->srv_uuid = m_registered_handlers[p_db_discovery->curr_srv_ind].srv_uuid;
-    
+
     DB_LOG("[DB]: Starting discovery of service with UUID 0x%x for Connection handle %d\r\n",
            p_srv_being_discovered->srv_uuid.uuid, p_db_discovery->conn_handle);
-    
+
     uint32_t err_code;
 
+    uart_put_uint32(0x12345678);
+    uart_put_uint32(p_db_discovery->conn_handle);
+    uart_put_uint32(*(uint32_t*)&(p_srv_being_discovered->srv_uuid));
     err_code = sd_ble_gattc_primary_services_discover(p_db_discovery->conn_handle,
                                                       SRV_DISC_START_HANDLE,
                                                       &(p_srv_being_discovered->srv_uuid));
@@ -881,7 +886,7 @@ void ble_db_discovery_on_ble_evt(ble_db_discovery_t * const p_db_discovery,
         case BLE_GAP_EVT_CONNECTED:
             p_db_discovery->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             break;
-        
+
         case BLE_GAP_EVT_DISCONNECTED:
             memset(p_db_discovery, 0, sizeof(ble_db_discovery_t));
             p_db_discovery->conn_handle = BLE_CONN_HANDLE_INVALID;

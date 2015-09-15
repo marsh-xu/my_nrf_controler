@@ -51,7 +51,7 @@ __WEAK void app_error_handler(uint32_t error_code, uint32_t line_num, const uint
 {
     // On assert, the system can only recover with a reset.
 
-    //uart_put_string((uint8_t *)p_file_name);
+    uart_put_string((uint8_t *)p_file_name);
     uart_put_uint32(line_num);
     uart_put_uint32(error_code);
 

@@ -44,8 +44,9 @@ typedef void (* ble_mhs_c_evt_handler_t) (ble_mhs_c_t * p_ble_mhs_c, ble_mhs_c_e
 struct ble_mhs_c_s
 {
     uint16_t                conn_handle;      /**< Connection handle as provided by the SoftDevice. */
-    uint16_t                hrm_cccd_handle;  /**< Handle of the CCCD of the Heart Rate Measurement characteristic. */
-    uint16_t                hrm_handle;       /**< Handle of the Heart Rate Measurement characteristic as provided by the SoftDevice. */
+    uint16_t                mhs_ctrl_cccd_handle;  /**< Handle of the CCCD of the Heart Rate Measurement characteristic. */
+    uint16_t                mhs_ctrl_handle;
+    uint16_t                mhs_event_handle;       /**< Handle of the Heart Rate Measurement characteristic as provided by the SoftDevice. */
     ble_mhs_c_evt_handler_t evt_handler;      /**< Application event handler to be called when there is an event related to the heart rate service. */
 };
 
@@ -60,6 +61,8 @@ uint32_t ble_mhs_c_init(ble_mhs_c_t * p_ble_mhs_c, ble_mhs_c_init_t * p_ble_mhs_
 uint32_t ble_mhs_c_evt_notif_enable(ble_mhs_c_t * p_ble_mhs_c);
 
 void ble_mhs_c_on_ble_evt(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt);
+
+void ble_mhs_c_get_temperature(void);
 
 
 #endif // BLE_MHS_C_H_

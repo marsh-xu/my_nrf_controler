@@ -42,6 +42,7 @@ C_SOURCE_FILES += \
 ../components/ble/common/ble_srv_common.c \
 ../components/toolchain/system_nrf51.c \
 ../components/libraries/timer/app_timer.c \
+../components/libraries/button/app_button.c \
 ../components/libraries/gpiote/app_gpiote.c \
 ../components/drivers_nrf/pstorage/pstorage.c \
 ../components/ble/ble_db_discovery/ble_db_discovery.c \
@@ -56,6 +57,7 @@ C_SOURCE_FILES += \
 ../src/gatt/mhs_c_proxy.c \
 ../src/driver/oled.c \
 ../src/driver/uart.c \
+../src/driver/button.c \
 ../src/driver/power_control.c \
 ../src/rtt/RTT/SEGGER_RTT.c \
 ../src/rtt/RTT/SEGGER_RTT_printf.c \

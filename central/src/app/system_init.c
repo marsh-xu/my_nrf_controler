@@ -11,9 +11,10 @@
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 #include "nrf_gpio.h"
-
+#include "app_timer.h"
 #include "ble_hci.h"
 #include "app_timer.h"
+#include "app_gpiote.h"
 #include "ble_db_discovery.h"
 #include "device_manager.h"
 #include "nrf_gpio.h"
@@ -21,6 +22,7 @@
 #include "softdevice_handler.h"
 #include "nrf_delay.h"
 
+#include "button.h"
 #include "ble_mhs_c.h"
 #include "oled.h"
 #include "mhs_c_proxy.h"
@@ -33,7 +35,6 @@
 
 #define TX_POWER_LEVEL                   0
 
-#define APP_TIMER_PRESCALER              0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_MAX_TIMERS             6                  /**< Maximum number of simultaneously created timers. */
 #define APP_TIMER_OP_QUEUE_SIZE          4                                          /**< Size of timer operation queues. */
 
@@ -64,6 +65,8 @@
 #define UUID16_SIZE                2                                  /**< Size of 16 bit UUID */
 
 #define TARGET_UUID                0xFFF0                             /**< Target device name that application is looking for. */
+
+#define APP_GPIOTE_MAX_USERS       2
 
 /**< Include or not the service_changed characteristic.
 if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -223,9 +226,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             err_code = ble_db_discovery_start(&m_ble_db_discovery,
                                               p_ble_evt->evt.gap_evt.conn_handle);
             APP_ERROR_CHECK(err_code);
-            err_code = ble_mhs_c_evt_notif_enable(get_mhs_obj());
-            APP_ERROR_CHECK(err_code);
-            uart_put_uint32(0xCCDD0000);
             break;
         }
         case BLE_GAP_EVT_DISCONNECTED:
@@ -285,7 +285,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                                                        &m_connection_param);
 
                         uart_put_uint32(0xDEADBEEF);
-                        uart_put_uint32(err_code);
 
                         if (err_code != NRF_SUCCESS)
                         {
@@ -404,17 +403,25 @@ static void db_discovery_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+/**@brief Initializing the GPIOTE handler module.
+ */
+static void gpiote_init(void)
+{
+    APP_GPIOTE_INIT(APP_GPIOTE_MAX_USERS);
+}
+
 
 void system_init(void)
 {
     uint32_t err_code;
 
-    SEGGER_RTT_printf(0, "system init\r\n");
-
     //oled_init();
 
     ble_stack_init();
     timers_init();
+    gpiote_init();
+
+    button_init();
 
     err_code = pstorage_init();
     APP_ERROR_CHECK(err_code);

@@ -1,8 +1,10 @@
 #include <stdio.h>
 
+#include "app_error.h"
 #include "nordic_common.h"
-
+#include "uart.h"
 #include "ble_db_discovery.h"
+#include "mhs_c_proxy.h"
 
 #include "ble_mhs_c.h"
 
@@ -11,6 +13,9 @@
 
 #define WRITE_MESSAGE_LENGTH   BLE_CCCD_VALUE_LEN    /**< Length of the write message for CCCD. */
 #define WRITE_MESSAGE_LENGTH   BLE_CCCD_VALUE_LEN    /**< Length of the write message for CCCD. */
+
+#define MHS_UUID_BASE   {0x1B, 0xC5, 0xD5, 0xA5, 0x02, 0x00, 0x82, 0x86,\
+        0xE3, 0x11, 0xCB, 0x37, 0x00, 0x00, 0x00, 0x00}
 
 typedef enum
 {
@@ -100,6 +105,7 @@ static void on_write_rsp(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
  */
 static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
 {
+    uint32_t err_code;
     // Check if the Heart Rate Service was discovered.
     if (p_evt->evt_type == BLE_DB_DISCOVERY_COMPLETE &&
         p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_MHS_SERVICE &&
@@ -113,14 +119,20 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
         for (i = 0; i < p_evt->params.discovered_db.char_count; i++)
         {
             if (p_evt->params.discovered_db.charateristics[i].characteristic.uuid.uuid ==
-                BLE_UUID_HEART_RATE_MEASUREMENT_CHAR)
+                BLE_UUID_MHS_CONTROL_POINT_CHAR)
             {
-                // Found Heart Rate characteristic. Store CCCD handle and break.
-                mp_ble_mhs_c->hrm_cccd_handle =
-                    p_evt->params.discovered_db.charateristics[i].cccd_handle;
-                mp_ble_mhs_c->hrm_handle      =
+                mp_ble_mhs_c->mhs_ctrl_handle      =
                     p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
-                break;
+            }
+            else if (p_evt->params.discovered_db.charateristics[i].characteristic.uuid.uuid ==
+                BLE_UUID_MHS_EVENT_CHAR)
+            {
+                mp_ble_mhs_c->mhs_ctrl_cccd_handle =
+                    p_evt->params.discovered_db.charateristics[i].cccd_handle;
+                mp_ble_mhs_c->mhs_event_handle      =
+                    p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
+                err_code = ble_mhs_c_evt_notif_enable(get_mhs_obj());
+                APP_ERROR_CHECK(err_code);
             }
         }
 
@@ -146,7 +158,7 @@ static void db_discover_evt_handler(ble_db_discovery_evt_t * p_evt)
 static void on_hvx(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
 {
     // Check if this is a heart rate notification.
-    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_mhs_c->hrm_handle)
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_mhs_c->mhs_event_handle)
     {
         ble_mhs_c_evt_t ble_mhs_c_evt;
         uint32_t        index = 0;
@@ -155,7 +167,7 @@ static void on_hvx(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt)
 
         ble_mhs_c_evt.mhs_evt_type = p_ble_evt->evt.gattc_evt.params.hvx.data[index++];
 
-        ble_mhs_c_evt.mhs_evt_type = uint16_decode(&(p_ble_evt->evt.gattc_evt.params.hvx.data[index]));
+        ble_mhs_c_evt.mhs_evt_data = uint16_decode(&(p_ble_evt->evt.gattc_evt.params.hvx.data[index]));
 
         p_ble_mhs_c->evt_handler(p_ble_mhs_c, &ble_mhs_c_evt);
     }
@@ -214,8 +226,34 @@ static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool 
 }
 
 
+static uint32_t ble_mhs_send_control_point_cmd(ble_mhs_c_t * p_ble_mhs_c, uint8_t *cmd, uint8_t len)
+{
+    tx_message_t * p_msg;
+
+    p_msg              = &m_tx_buffer[m_tx_insert_index++];
+    m_tx_insert_index &= TX_BUFFER_MASK;
+
+    p_msg->req.write_req.gattc_params.handle   = p_ble_mhs_c->mhs_ctrl_handle;
+    p_msg->req.write_req.gattc_params.len      = len;
+    p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
+    p_msg->req.write_req.gattc_params.offset   = 0;
+    p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_REQ;
+    for(uint8_t i = 0; i < len; i++)
+    {
+        p_msg->req.write_req.gattc_value[i] = *(cmd + i);
+    }
+    p_msg->conn_handle                         = p_ble_mhs_c->conn_handle;
+    p_msg->type                                = WRITE_REQ;
+
+    tx_buffer_process();
+    return NRF_SUCCESS;
+}
+
+
 uint32_t ble_mhs_c_init(ble_mhs_c_t * p_ble_mhs_c, ble_mhs_c_init_t * p_ble_mhs_c_init)
 {
+    uint32_t err_code;
+
     if ((p_ble_mhs_c == NULL) || (p_ble_mhs_c_init == NULL))
     {
         return NRF_ERROR_NULL;
@@ -223,14 +261,25 @@ uint32_t ble_mhs_c_init(ble_mhs_c_t * p_ble_mhs_c, ble_mhs_c_init_t * p_ble_mhs_
 
     ble_uuid_t mhs_uuid;
 
-    mhs_uuid.type = BLE_UUID_TYPE_BLE;
-    mhs_uuid.uuid = BLE_UUID_HEART_RATE_SERVICE;
+    ble_uuid128_t base_uuid  =
+    {
+        .uuid128 = MHS_UUID_BASE,
+    };
+
+    mhs_uuid.type = BLE_UUID_TYPE_VENDOR_BEGIN;
+    mhs_uuid.uuid = BLE_UUID_MHS_SERVICE;
+
+    err_code = sd_ble_uuid_vs_add(&base_uuid, &(mhs_uuid.type));
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
 
     mp_ble_mhs_c = p_ble_mhs_c;
 
     mp_ble_mhs_c->evt_handler     = p_ble_mhs_c_init->evt_handler;
     mp_ble_mhs_c->conn_handle     = BLE_CONN_HANDLE_INVALID;
-    mp_ble_mhs_c->hrm_cccd_handle = BLE_GATT_HANDLE_INVALID;
+    mp_ble_mhs_c->mhs_ctrl_cccd_handle = BLE_GATT_HANDLE_INVALID;
 
     return ble_db_discovery_evt_register(&mhs_uuid,
                                          db_discover_evt_handler);
@@ -244,5 +293,12 @@ uint32_t ble_mhs_c_evt_notif_enable(ble_mhs_c_t * p_ble_mhs_c)
         return NRF_ERROR_NULL;
     }
 
-    return cccd_configure(p_ble_mhs_c->conn_handle, p_ble_mhs_c->hrm_cccd_handle, true);
+    return cccd_configure(p_ble_mhs_c->conn_handle, p_ble_mhs_c->mhs_ctrl_cccd_handle, true);
+}
+
+
+void ble_mhs_c_get_temperature(void)
+{
+    uint8_t cmd = 0x02;
+    ble_mhs_send_control_point_cmd(get_mhs_obj(), &cmd, sizeof(cmd));
 }

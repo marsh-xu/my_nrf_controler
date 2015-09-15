@@ -15,4 +15,6 @@
 #define RTS_PIN_NUMBER                                    3   // not use
 #define CTS_PIN_NUMBER                                    5   // not use
 
+#define KEY1_PIN_NUMBER                                   26
+
 #endif
