@@ -155,12 +155,13 @@ uint16_t ds18b20_read_temperature(void)
 
             if (temperature < 0xFFF)
             {
-                temperature = temperature * 0.0625 * 10 + 0.5;
+                temperature = temperature * 0.0625 + 0.5;
             }
             else
             {
                 temperature = ~temperature + 1;
-                temperature = temperature * 0.0625 * 10 + 0.5;
+                //temperature = temperature * 0.0625 * 10 + 0.5;
+                temperature = temperature * 0.0625 + 0.5;
                 temperature = temperature | 0x8000;
             }
 

@@ -102,6 +102,8 @@ void report_current_temperature(void)
     uint32_t err_code;
     mhs_event_t event;
 
+    temperature_detect_timeout_handler(NULL);
+
     memset(&event, 0, sizeof(mhs_event_t));
     event.evt_code       = MHS_EVENT_CODE_CURRENT_TEMPERATURE;
     event.evt_value.buff = (uint8_t *)&m_current_temperature;

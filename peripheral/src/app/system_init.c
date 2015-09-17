@@ -43,6 +43,7 @@
 #define SLAVE_LATENCY                    4                                          /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                 MSEC_TO_UNITS(4000, UNIT_10_MS)            /**< Connection supervisory timeout (4 seconds). */
 
+#define UUID_TARGET                      0xFFF0
 
 /**< Include or not the service_changed characteristic.
 if not enabled, the server's database cannot be changed for the lifetime of the device*/
@@ -211,7 +212,7 @@ static void advertising_init(void)
     ble_advdata_t advdata;
     int8_t        tx_power_level = TX_POWER_LEVEL;
 
-    ble_uuid_t adv_uuids[] = {{BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}};
+    ble_uuid_t adv_uuids[] = {{UUID_TARGET, BLE_UUID_TYPE_BLE}};
 
     // Build advertising data struct to pass into @ref ble_advertising_init.
     memset(&advdata, 0, sizeof(advdata));
