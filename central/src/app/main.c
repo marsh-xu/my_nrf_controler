@@ -17,7 +17,7 @@
  * (and also Battery and Device Information services). This application uses the
  * @ref srvlib_conn_params module.
  */
-
+#include <stdlib.h>
 #include <app_error.h>
 #include <nrf_soc.h>
 #include "nrf_delay.h"
@@ -26,6 +26,8 @@
 
 #include "system_init.h"
 #include "power_control.h"
+
+#include "SEGGER_RTT.h"
 
 /**@brief Function for the Power manager.
  */
@@ -41,8 +43,11 @@ int main(void)
 {
     power_control_enable(true);
 
-    uart_init();
-    uart_put_uint8(0xAA);
+    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
+    SEGGER_RTT_printf(0, "App started!  %s\r\n", "Marsh");
+
+    //uart_init();
+    //uart_put_uint8(0xAA);
 
     system_init();
 

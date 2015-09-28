@@ -17,8 +17,6 @@
 #include "app_trace.h"
 #include "nordic_common.h"
 
-#include "uart.h"
-
 #define SRV_DISC_START_HANDLE  0x0001                    /**< The start handle value used during service discovery. */
 #define DB_DISCOVERY_MAX_USERS BLE_DB_DISCOVERY_MAX_SRV  /**< The maximum number of users/registrations allowed by this module. */
 #define DB_LOG                 app_trace_log             /**< A debug logger macro that can be used in this file to do logging information over UART. */
@@ -851,9 +849,6 @@ uint32_t ble_db_discovery_start(ble_db_discovery_t * const p_db_discovery,
 
     uint32_t err_code;
 
-    uart_put_uint32(0x12345678);
-    uart_put_uint32(p_db_discovery->conn_handle);
-    uart_put_uint32(*(uint32_t*)&(p_srv_being_discovered->srv_uuid));
     err_code = sd_ble_gattc_primary_services_discover(p_db_discovery->conn_handle,
                                                       SRV_DISC_START_HANDLE,
                                                       &(p_srv_being_discovered->srv_uuid));

@@ -284,8 +284,6 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                                                        &m_scan_param,
                                                        &m_connection_param);
 
-                        uart_put_uint32(0xDEADBEEF);
-
                         if (err_code != NRF_SUCCESS)
                         {
                             //APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
@@ -415,13 +413,13 @@ void system_init(void)
 {
     uint32_t err_code;
 
-    //oled_init();
-
     ble_stack_init();
     timers_init();
     gpiote_init();
 
     button_init();
+
+    oled_init();
 
     err_code = pstorage_init();
     APP_ERROR_CHECK(err_code);

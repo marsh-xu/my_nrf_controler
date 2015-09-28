@@ -29,9 +29,7 @@ static void mhs_c_evt_handler(ble_mhs_c_t * p_mhs_c, ble_mhs_c_evt_t * p_mhs_c_e
 
         case BLE_MHS_C_EVT_NOTIFICATION:
         {
-            uart_put_uint32(0x00112233);
-            uart_put_uint8(p_mhs_c_evt->mhs_evt_type);
-            uart_put_uint16(p_mhs_c_evt->mhs_evt_data);
+
             break;
         }
 

@@ -51,16 +51,17 @@ C_SOURCE_FILES += \
 ../components/drivers_nrf/spi_master/spi_master.c \
 ../components/drivers_nrf/uart/app_uart.c \
 ../components/libraries/trace/app_trace.c \
+../components/drivers_nrf/nrf_soc_nosd/nrf_soc.c \
 ../src/app/main.c \
 ../src/app/system_init.c \
 ../src/gatt/ble_mhs_c.c \
 ../src/gatt/mhs_c_proxy.c \
 ../src/driver/oled.c \
-../src/driver/uart.c \
 ../src/driver/button.c \
 ../src/driver/power_control.c \
 ../src/rtt/RTT/SEGGER_RTT.c \
 ../src/rtt/RTT/SEGGER_RTT_printf.c \
+#../src/driver/uart.c \
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = ../components/toolchain/gcc/gcc_startup_nrf51.s
@@ -95,6 +96,7 @@ INC_PATHS += -I../src/app
 INC_PATHS += -I../src/driver
 INC_PATHS += -I../src/gatt
 INC_PATHS += -I../src/rtt/RTT
+INC_PATHS += -I../components/softdevice/s120/headers
 
 OBJECT_DIRECTORY = _build
 LISTING_DIRECTORY = $(OBJECT_DIRECTORY)

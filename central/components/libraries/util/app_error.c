@@ -23,7 +23,9 @@
 #include "app_error.h"
 #include "compiler_abstraction.h"
 #include "nordic_common.h"
+#include "nrf_delay.h"
 #include "uart.h"
+#include "SEGGER_RTT.h"
 #ifdef DEBUG
 #include "bsp.h"
 
@@ -51,10 +53,12 @@ __WEAK void app_error_handler(uint32_t error_code, uint32_t line_num, const uint
 {
     // On assert, the system can only recover with a reset.
 
-    uart_put_string((uint8_t *)p_file_name);
-    uart_put_uint32(line_num);
-    uart_put_uint32(error_code);
+    //uart_put_string((uint8_t *)p_file_name);
+    //uart_put_uint32(line_num);
+    //uart_put_uint32(error_code);
+    SEGGER_RTT_printf(0, "err_code = %p   %p  %s\r\n", error_code, line_num, p_file_name);
 
+    nrf_delay_ms(1000);
 
 #ifndef DEBUG
     NVIC_SystemReset();
