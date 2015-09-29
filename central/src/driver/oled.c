@@ -39,7 +39,7 @@
         SPI_PIN_DISCONNECTED,         /**< MISO pin. */                           \
         OLED_SPI_MOSI_PIN_NUMBER,     /**< MOSI pin. */                           \
         SPI_PIN_DISCONNECTED,         /**< Slave select pin. */                   \
-        APP_IRQ_PRIORITY_HIGH,         /**< Interrupt priority LOW. */             \
+        APP_IRQ_PRIORITY_LOW,         /**< Interrupt priority LOW. */             \
         SPI_CONFIG_ORDER_MsbFirst,    /**< Bits order MSB. */                     \
         SPI_CONFIG_CPOL_ActiveHigh,   /**< Serial clock polarity ACTIVEHIGH. */   \
         SPI_CONFIG_CPHA_Leading,      /**< Serial clock phase LEADING. */         \

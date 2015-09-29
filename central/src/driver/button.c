@@ -6,6 +6,8 @@
 #include "pin_config.h"
 #include "uart.h"
 
+#include "SEGGER_RTT.h"
+
 #include "button.h"
 
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)
@@ -19,12 +21,20 @@
  */
 static void button_event_handler(uint8_t pin_no, uint8_t button_event)
 {
+    SEGGER_RTT_printf(0, "pin = %p, event = %p\r\n", pin_no, button_event);
     if (button_event == APP_BUTTON_PUSH)
     {
         switch (pin_no)
         {
             case KEY1_PIN_NUMBER:
-                ble_mhs_c_get_temperature();
+                break;
+            case KEY2_PIN_NUMBER:
+                break;
+            case KEY3_PIN_NUMBER:
+                break;
+            case KEY4_PIN_NUMBER:
+                break;
+            case KEY5_PIN_NUMBER:
                 break;
             default:
                 APP_ERROR_HANDLER(pin_no);
@@ -36,6 +46,14 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
         switch (pin_no)
         {
             case KEY1_PIN_NUMBER:
+                break;
+            case KEY2_PIN_NUMBER:
+                break;
+            case KEY3_PIN_NUMBER:
+                break;
+            case KEY4_PIN_NUMBER:
+                break;
+            case KEY5_PIN_NUMBER:
                 break;
             default:
                 APP_ERROR_HANDLER(pin_no);
@@ -52,6 +70,10 @@ void button_init(void)
     static app_button_cfg_t buttons[] =
     {
         {KEY1_PIN_NUMBER, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {KEY2_PIN_NUMBER, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {KEY3_PIN_NUMBER, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {KEY4_PIN_NUMBER, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {KEY5_PIN_NUMBER, APP_BUTTON_ACTIVE_LOW, NRF_GPIO_PIN_NOPULL, button_event_handler},
     };
 
     app_button_init(buttons, sizeof(buttons) / sizeof(buttons[0]), BUTTON_DETECTION_DELAY);
