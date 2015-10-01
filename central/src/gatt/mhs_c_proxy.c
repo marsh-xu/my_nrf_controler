@@ -2,6 +2,7 @@
 
 #include "ble_mhs_c.h"
 #include "uart.h"
+#include "button.h"
 
 #include "mhs_c_proxy.h"
 
@@ -16,20 +17,14 @@ static void mhs_c_evt_handler(ble_mhs_c_t * p_mhs_c, ble_mhs_c_evt_t * p_mhs_c_e
     switch (p_mhs_c_evt->evt_type)
     {
         case BLE_MHS_C_EVT_DISCOVERY_COMPLETE:
-            // Initiate bonding.
-            //err_code = dm_security_setup_req(&m_dm_device_handle);
-            //APP_ERROR_CHECK(err_code);
-
-            // Heart rate service discovered. Enable notification of Heart Rate Measurement.
-            err_code = ble_mhs_c_evt_notif_enable(p_mhs_c);
+        {
+           err_code = ble_mhs_c_evt_notif_enable(p_mhs_c);
             APP_ERROR_CHECK(err_code);
-
-            //printf("Heart rate service discovered \r\n");
             break;
-
+        }
         case BLE_MHS_C_EVT_NOTIFICATION:
         {
-
+            mhs_c_notification(p_mhs_c_evt->mhs_evt_type, p_mhs_c_evt->mhs_evt_data);
             break;
         }
 

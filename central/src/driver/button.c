@@ -5,12 +5,144 @@
 #include "ble_mhs_c.h"
 #include "pin_config.h"
 #include "uart.h"
+#include "oled.h"
 
 #include "SEGGER_RTT.h"
 
 #include "button.h"
 
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)
+#define UI_TOTAL_NUM                    6
+
+static oled_ui_style_t ui_index = 0;
+
+static bool is_setting_temp_threshold = false;
+static bool is_setting_motor_speed = false;
+static bool is_setting_motor_control = false;
+
+static uint8_t m_temp_threshold = 0;
+static uint8_t m_motor_speed = 0;
+static uint8_t m_motor_index = 0;
+
+void button_up_event()
+{
+    if (is_setting_temp_threshold == true)
+    {
+        m_temp_threshold += 10;
+        if (m_temp_threshold > 100)
+        {
+            m_temp_threshold = 0;
+        }
+        oled_show_num(m_temp_threshold);
+    }
+    else if (is_setting_motor_speed == true)
+    {
+        m_motor_speed += 10;
+        if (m_motor_speed > 100)
+        {
+            m_motor_speed = 0;
+        }
+        oled_show_num(m_motor_speed);
+    }
+    else if (is_setting_motor_control == true)
+    {
+        m_motor_index ++;
+        m_motor_index = m_motor_index % 8;
+        oled_show_num(m_motor_index);
+    }
+    else
+    {
+        ui_index ++;
+        ui_index = ui_index % UI_STYLE_TOTAL_NUM;
+        ui_up_update(ui_index);
+    }
+}
+
+void button_ok_event(void)
+{
+    switch (ui_index)
+    {
+        case UI_STYLE_GET_TEMPERATURE:
+        {
+            uint8_t cmd = MHS_CMD_CODE_GET_TEMPERATURE;
+            ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
+            oled_clear_num();
+            break;
+        }
+        case UI_STYLE_GET_TEMP_THRESHOLD:
+        {
+            uint8_t cmd = MHS_CMD_CODE_GET_TEMP_THRESHOLD;
+            ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
+            oled_clear_num();
+            break;
+        }
+        case UI_STYLE_GET_MOTOR_SPEED:
+        {
+            uint8_t cmd = MHS_CMD_CODE_GET_MOTOR_SPEED;
+            ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
+            oled_clear_num();
+            break;
+        }
+        case UI_STYLE_SET_TEMP_THRESHOLD:
+        {
+            if (is_setting_temp_threshold == false)
+            {
+                is_setting_temp_threshold = true;
+                oled_show_choose_status(true);
+                oled_show_num(m_temp_threshold);
+            }
+            else
+            {
+                uint8_t cmd[3] = {0};
+                cmd[0] = MHS_CMD_CODE_GET_MOTOR_SPEED;
+                cmd[1] = m_temp_threshold;
+                ble_mhs_c_send_cmd(cmd, sizeof(cmd));
+                is_setting_temp_threshold = false;
+                oled_show_choose_status(false);
+                oled_clear_num();
+            }
+            break;
+        }
+        case UI_STYLE_SET_MOTOR_SPEED:
+        {
+            if (is_setting_motor_speed == false)
+            {
+                is_setting_motor_speed = true;
+                oled_show_choose_status(true);
+                oled_show_num(m_motor_speed);
+            }
+            else
+            {
+                uint8_t cmd[3] = {0};
+                cmd[0] = MHS_CMD_CODE_SET_MOTOR_SPEED;
+                cmd[1] = m_motor_speed;
+                ble_mhs_c_send_cmd(cmd, sizeof(cmd));
+                is_setting_motor_speed = false;
+                oled_show_choose_status(false);
+                oled_clear_num();
+            }
+            break;
+        }
+        case UI_STYLE_SET_MOTOR_CONTROL:
+        {
+            if (is_setting_motor_control == false)
+            {
+                is_setting_motor_control = true;
+                oled_show_choose_status(true);
+                oled_show_num(m_motor_index);
+            }
+            else
+            {
+                is_setting_motor_control = false;
+                oled_show_choose_status(false);
+                oled_clear_num();
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 /**@brief Handle a button event.
  *
@@ -27,9 +159,15 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
         switch (pin_no)
         {
             case KEY1_PIN_NUMBER:
+            {
+                button_ok_event();
                 break;
+            }
             case KEY2_PIN_NUMBER:
+            {
+                button_up_event();
                 break;
+            }
             case KEY3_PIN_NUMBER:
                 break;
             case KEY4_PIN_NUMBER:
@@ -80,3 +218,29 @@ void button_init(void)
     app_button_enable();
 }
 
+void mhs_c_notification(uint8_t evt_type, uint16_t evt_data)
+{
+    switch (evt_type)
+    {
+        case MHS_EVENT_CODE_CURRENT_TEMPERATURE:
+        {
+            uint16_t temp = evt_data;
+            oled_show_num(temp);
+            break;
+        }
+        case MHS_EVENT_CODE_TEMP_THRESHOLD:
+        {
+            m_temp_threshold = evt_data;
+            oled_show_num(m_temp_threshold);
+            break;
+        }
+        case MHS_EVENT_CODE_MOTOR_SPEED:
+        {
+            m_motor_speed = evt_data;
+            oled_show_num(m_motor_speed);
+            break;
+        }
+        default:
+            break;
+    }
+}

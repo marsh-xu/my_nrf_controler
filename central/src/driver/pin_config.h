@@ -9,6 +9,9 @@
 #define OLED_SPI_MOSI_PIN_NUMBER                          28
 #define OLED_CD_CTRL_PIN_NUMBER                           23
 
+#define OLED_CE_PIN_NUMBER                                0
+#define GB_CE_PIN_NUMBER                                  25
+
 #define POWER_CONTROL                                     15
 
 #define RX_PIN_NUMBER                                     31
@@ -16,10 +19,10 @@
 #define RTS_PIN_NUMBER                                    3   // not use
 #define CTS_PIN_NUMBER                                    5   // not use
 
-#define KEY1_PIN_NUMBER                                   11
-#define KEY2_PIN_NUMBER                                   10
-#define KEY3_PIN_NUMBER                                   12
+#define KEY1_PIN_NUMBER                                   11 //确认
+#define KEY2_PIN_NUMBER                                   10 //上
+#define KEY3_PIN_NUMBER                                   12 //
 #define KEY4_PIN_NUMBER                                   7
-#define KEY5_PIN_NUMBER                                   9
+#define KEY5_PIN_NUMBER                                   9 //右
 
 #endif

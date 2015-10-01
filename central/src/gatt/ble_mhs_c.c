@@ -296,9 +296,7 @@ uint32_t ble_mhs_c_evt_notif_enable(ble_mhs_c_t * p_ble_mhs_c)
     return cccd_configure(p_ble_mhs_c->conn_handle, p_ble_mhs_c->mhs_ctrl_cccd_handle, true);
 }
 
-
-void ble_mhs_c_get_temperature(void)
+void ble_mhs_c_send_cmd(uint8_t *cmd, uint8_t len)
 {
-    uint8_t cmd = 0x02;
-    ble_mhs_send_control_point_cmd(get_mhs_obj(), &cmd, sizeof(cmd));
+    ble_mhs_send_control_point_cmd(get_mhs_obj(), cmd, len);
 }

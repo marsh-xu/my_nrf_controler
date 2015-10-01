@@ -50,6 +50,25 @@ struct ble_mhs_c_s
     ble_mhs_c_evt_handler_t evt_handler;      /**< Application event handler to be called when there is an event related to the heart rate service. */
 };
 
+typedef enum mhs_control_point_cmd_code_e
+{
+    MHS_CMD_CODE_GET_TEMPERATURE                 = 0x01,
+    MHS_CMD_CODE_GET_TEMP_THRESHOLD              = 0x02,
+    MHS_CMD_CODE_GET_MOTOR_SPEED                 = 0x03,
+    MHS_CMD_CODE_SET_TEMP_THRESHOLD              = 0x04,
+    MHS_CMD_CODE_SET_MOTOR_CONTROL               = 0x05,
+    MHS_CMD_CODE_SET_MOTOR_SPEED                 = 0x06,
+    MHS_CMD_CODE_SET_MOTOR_OFF                   = 0x07,
+    MHS_CMD_CODE_SET_MUSIC_CONTROL               = 0x08,
+} mhs_control_point_cmd_code_t;
+
+typedef enum mhs_event_code_e
+{
+    MHS_EVENT_CODE_CURRENT_TEMPERATURE = 0,
+    MHS_EVENT_CODE_TEMP_THRESHOLD,
+    MHS_EVENT_CODE_MOTOR_SPEED,
+} mhs_event_code_t;
+
 typedef struct
 {
     ble_mhs_c_evt_handler_t evt_handler;
@@ -62,7 +81,6 @@ uint32_t ble_mhs_c_evt_notif_enable(ble_mhs_c_t * p_ble_mhs_c);
 
 void ble_mhs_c_on_ble_evt(ble_mhs_c_t * p_ble_mhs_c, const ble_evt_t * p_ble_evt);
 
-void ble_mhs_c_get_temperature(void);
-
+void ble_mhs_c_send_cmd(uint8_t *cmd, uint8_t len);
 
 #endif // BLE_MHS_C_H_
