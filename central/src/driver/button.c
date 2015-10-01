@@ -94,7 +94,7 @@ void button_ok_event(void)
             else
             {
                 uint8_t cmd[3] = {0};
-                cmd[0] = MHS_CMD_CODE_GET_MOTOR_SPEED;
+                cmd[0] = MHS_CMD_CODE_SET_TEMP_THRESHOLD;
                 cmd[1] = m_temp_threshold;
                 ble_mhs_c_send_cmd(cmd, sizeof(cmd));
                 is_setting_temp_threshold = false;
@@ -144,6 +144,39 @@ void button_ok_event(void)
     }
 }
 
+void button_right_event(void)
+{
+    if (is_setting_motor_control == true)
+    {
+        uint8_t cmd[3] = {0};
+        cmd[0] = MHS_CMD_CODE_SET_MOTOR_CONTROL;
+        cmd[1] = 0x00;
+        cmd[2] = m_motor_index;
+        ble_mhs_c_send_cmd(cmd, sizeof(cmd));
+    }
+}
+
+void button_left_event(void)
+{
+    if (is_setting_motor_control == true)
+    {
+        uint8_t cmd[3] = {0};
+        cmd[0] = MHS_CMD_CODE_SET_MOTOR_CONTROL;
+        cmd[1] = 0x01;
+        cmd[2] = m_motor_index;
+        ble_mhs_c_send_cmd(cmd, sizeof(cmd));
+    }
+}
+
+void motor_off(void)
+{
+    if (is_setting_motor_control == true)
+    {
+        uint8_t cmd = 0x07;
+        ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
+    }
+}
+
 /**@brief Handle a button event.
  *
  * @details This function will be called when the state of button has changed.
@@ -169,11 +202,17 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
                 break;
             }
             case KEY3_PIN_NUMBER:
+            {
+                button_left_event();
                 break;
+            }
             case KEY4_PIN_NUMBER:
                 break;
             case KEY5_PIN_NUMBER:
+            {
+                button_right_event();
                 break;
+            }
             default:
                 APP_ERROR_HANDLER(pin_no);
                 break;
@@ -188,11 +227,17 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
             case KEY2_PIN_NUMBER:
                 break;
             case KEY3_PIN_NUMBER:
+            {
+                motor_off();
                 break;
+            }
             case KEY4_PIN_NUMBER:
                 break;
             case KEY5_PIN_NUMBER:
+            {
+                motor_off();
                 break;
+            }
             default:
                 APP_ERROR_HANDLER(pin_no);
                 break;
