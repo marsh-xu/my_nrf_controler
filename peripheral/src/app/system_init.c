@@ -319,10 +319,10 @@ void system_init(void)
     SEGGER_RTT_printf(0, "peripheral init %s\r\n", "started");
 
     motor_init();
-    SEGGER_RTT_printf(0, "motor init %s\r\n", "started");
-    heat_control_init();
-    SEGGER_RTT_printf(0, "heat init %s\r\n", "started");
-    auto_temperature_init();
+    //SEGGER_RTT_printf(0, "motor init %s\r\n", "started");
+    //heat_control_init();
+    //SEGGER_RTT_printf(0, "heat init %s\r\n", "started");
+    //auto_temperature_init();
     SEGGER_RTT_printf(0, "auto temp init %s\r\n", "started");
 
     music_control_init();
