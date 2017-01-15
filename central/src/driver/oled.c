@@ -419,6 +419,7 @@ static void oled_set_pos(uint8_t x, uint8_t y)
 //size:选择字体 16/12
 void oled_show_char(uint8_t x,uint8_t y,uint8_t chr)
 {
+#ifdef OLED_USE
     uint8_t c=0,i=0;
     c = chr - ' ';//得到偏移后的值
 
@@ -440,10 +441,12 @@ void oled_show_char(uint8_t x,uint8_t y,uint8_t chr)
         uint8_t data = F8X16[c*16+i+8];
         oled_spi_send_data(&data,1);
     }
+#endif
 }
 
 void oled_show_string(uint8_t x,uint8_t y,uint8_t *chr)
 {
+#ifdef OLED_USE
     uint8_t j=0;
     while (chr[j]!='\0')
     {
@@ -452,11 +455,13 @@ void oled_show_string(uint8_t x,uint8_t y,uint8_t *chr)
         if(x>120){x=0;y+=2;}
             j++;
     }
+#endif
 }
 
 
 void convert_chinese_word(uint8_t *dest, uint8_t *src)
 {
+#ifdef OLED_USE
     uint8_t index = 0;
 
     for(index = 0; index < 8; index ++)
@@ -502,11 +507,13 @@ void convert_chinese_word(uint8_t *dest, uint8_t *src)
 
         dest[index] = data;
     }
+#endif
 }
 
 
 void oled_show_chinese(uint8_t x,uint8_t y,uint8_t *src)
 {
+#ifdef OLED_USE
     convert_chinese_word(conv_data,src);
     uint8_t i = 0;
     if( x > Max_Column-1)
@@ -527,21 +534,25 @@ void oled_show_chinese(uint8_t x,uint8_t y,uint8_t *src)
         uint8_t data = conv_data[i+16];
         oled_spi_send_data(&data,1);
     }
+#endif
 }
 
 uint16_t convent_chinese_to_utf8(uint8_t *word)
 {
     uint16_t data = 0;
+#ifdef OLED_USE
     data = word[2] & 0x3F;
     data |= (word[1] & 0x3F)<<6;
     data |= (word[0] & 0x0F)<<12;
-
+#endif
     return data;
+
 }
 
 
 void show_ui_get_temperature(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x04,0x40,0x04,0x44,0xFF,0xFE,0x04,0x40,0x24,0x28,0x18,0x24,0x10,0x20,0x2B,0xFE,
@@ -562,10 +573,12 @@ void show_ui_get_temperature(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 void show_ui_get_temp_threshold(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x04,0x40,0x04,0x44,0xFF,0xFE,0x04,0x40,0x24,0x28,0x18,0x24,0x10,0x20,0x2B,0xFE,
@@ -586,10 +599,12 @@ void show_ui_get_temp_threshold(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 void show_ui_set_temp_threshold(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x01,0xF0,0x21,0x10,0x11,0x10,0x11,0x10,0x01,0x10,0x02,0x0E,0xF4,0x00,0x13,0xF8,
@@ -610,10 +625,12 @@ void show_ui_set_temp_threshold(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 void show_ui_get_motor_speed(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x04,0x40,0x04,0x44,0xFF,0xFE,0x04,0x40,0x24,0x28,0x18,0x24,0x10,0x20,0x2B,0xFE,
@@ -634,11 +651,13 @@ void show_ui_get_motor_speed(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 
 void show_ui_set_motor_speed(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x01,0xF0,0x21,0x10,0x11,0x10,0x11,0x10,0x01,0x10,0x02,0x0E,0xF4,0x00,0x13,0xF8,
@@ -659,11 +678,13 @@ void show_ui_set_motor_speed(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 
 void show_ui_motor_control(void)
 {
+#ifdef OLED_USE
     uint8_t raw_data[6][32] =
     {
         {0x00,0x20,0x3F,0xF0,0x00,0x20,0x08,0x20,0x08,0x20,0x08,0x20,0x08,0x20,0x08,0x24,
@@ -680,11 +701,13 @@ void show_ui_motor_control(void)
     {
         oled_show_chinese(16*i, 4, raw_data[i]);
     }
+#endif
 }
 
 
 void oled_show_connect_status(bool is_connect)
 {
+#ifdef OLED_USE
     if (is_connect)
     {
         uint8_t data[32] = {
@@ -701,11 +724,13 @@ void oled_show_connect_status(bool is_connect)
 
         oled_show_chinese(96, 0, data);
     }
+#endif
 }
 
 
 void oled_show_choose_status(bool is_choose)
 {
+#ifdef OLED_USE
     if (is_choose)
     {
         uint8_t data[32] = {
@@ -720,11 +745,13 @@ void oled_show_choose_status(bool is_choose)
 
         oled_show_chinese(112, 4, data);
     }
+#endif
 }
 
 
 void oled_init(void)
 {
+#ifdef OLED_USE
     oled_pin_config();
 
     choose_spi_mode(SPI_MODE_OLED);
@@ -770,10 +797,12 @@ void oled_init(void)
     //show_ui_get_temperature();
     //show_ui_get_temp_threshold();
     //show_ui_get_motor_speed();
+#endif
 }
 
 void ui_up_update(oled_ui_style_t index)
 {
+#ifdef OLED_USE
     switch (index)
     {
         case UI_STYLE_GET_TEMPERATURE:
@@ -797,11 +826,13 @@ void ui_up_update(oled_ui_style_t index)
         default:
             break;
     }
+#endif
 }
 
 
 void oled_show_num(uint8_t num)
 {
+#ifdef OLED_USE
     uint8_t data[4] = {0};
 
     oled_clear_num();
@@ -823,13 +854,16 @@ void oled_show_num(uint8_t num)
     }
 
     oled_show_string(32, 6, data);
+#endif
 }
 
 void oled_clear_num(void)
 {
+#ifdef OLED_USE
     uint8_t data = ' ';
     oled_show_char(32+0, 6, data);
     oled_show_char(32+8, 6, data);
     oled_show_char(32+16, 6, data);
+#endif
 }
 
