@@ -1,3 +1,9 @@
-GNU_INSTALL_ROOT := $(ROOT_DIR)gcc-arm-none-eabi-5_4-2016q3
+ifeq ($(findstring 86, $(ProgramFiles)), )
+	PROGFILES := C:/Program Files
+else
+	PROGFILES := C:/Program Files (x86)
+endif
+
+GNU_INSTALL_ROOT := $(PROGFILES)/GNU Tools ARM Embedded/5.4 2016q3
 GNU_VERSION := 5.4.1
 GNU_PREFIX := arm-none-eabi
