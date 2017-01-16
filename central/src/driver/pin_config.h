@@ -19,10 +19,11 @@
 #define RTS_PIN_NUMBER                                    3   // not use
 #define CTS_PIN_NUMBER                                    5   // not use
 
-#define KEY1_PIN_NUMBER                                   11 //确认
-#define KEY2_PIN_NUMBER                                   10 //上
-#define KEY3_PIN_NUMBER                                   12 //
-#define KEY4_PIN_NUMBER                                   7
-#define KEY5_PIN_NUMBER                                   9 //右
+#define KEY_A_PIN_NUMBER                                   13 //正转-上
+#define KEY_B_PIN_NUMBER                                   14 //正转-下
+#define KEY_U_PIN_NUMBER                                   10 //上
+#define KEY_D_PIN_NUMBER                                   12 //下
+#define KEY_L_PIN_NUMBER                                   9  //左
+#define KEY_R_PIN_NUMBER                                   11 //右
 
 #endif
