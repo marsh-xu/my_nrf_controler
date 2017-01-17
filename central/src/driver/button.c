@@ -70,15 +70,17 @@ void button_clock_event(void)
     {
         uint8_t cmd[3] = {0};
         cmd[0] = MHS_CMD_CODE_SET_MOTOR_CONTROL;
-        cmd[1] = 0x00;
-        cmd[2] = m_motor_index;
+        cmd[1] = m_motor_index;
+        cmd[2] = 0x00;
         ble_mhs_c_send_cmd(cmd, sizeof(cmd));
         is_setting_motor_control = true;
+        SEGGER_RTT_printf(0, "Motor %d on clock\r\n", m_motor_index);
     }
     else
     {
         motor_off();
         is_setting_motor_control = false;
+        SEGGER_RTT_printf(0, "Motor %d off clock\r\n", m_motor_index);
     }
 }
 
@@ -88,15 +90,17 @@ void button_unclock_event(void)
     {
         uint8_t cmd[3] = {0};
         cmd[0] = MHS_CMD_CODE_SET_MOTOR_CONTROL;
-        cmd[1] = 0x01;
-        cmd[2] = m_motor_index;
+        cmd[1] = m_motor_index;
+        cmd[2] = 0x01;
         ble_mhs_c_send_cmd(cmd, sizeof(cmd));
         is_setting_motor_control = true;
+        SEGGER_RTT_printf(0, "Motor %d on unclock\r\n", m_motor_index);
     }
     else
     {
         motor_off();
         is_setting_motor_control = false;
+        SEGGER_RTT_printf(0, "Motor %d off clock\r\n", m_motor_index);
     }
 }
 
