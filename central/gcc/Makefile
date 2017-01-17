@@ -51,14 +51,11 @@ C_SOURCE_FILES += \
 ../components/ble/device_manager/device_manager_central.c \
 ../components/softdevice/common/softdevice_handler/softdevice_handler.c \
 ../components/drivers_nrf/spi_master/spi_master.c \
-../components/drivers_nrf/uart/app_uart.c \
-../components/libraries/trace/app_trace.c \
 ../components/drivers_nrf/nrf_soc_nosd/nrf_soc.c \
 ../src/app/main.c \
 ../src/app/system_init.c \
 ../src/gatt/ble_mhs_c.c \
 ../src/gatt/mhs_c_proxy.c \
-../src/driver/oled.c \
 ../src/driver/button.c \
 ../src/driver/power_control.c \
 ../src/rtt/RTT/SEGGER_RTT.c \

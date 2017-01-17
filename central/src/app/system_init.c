@@ -223,7 +223,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
         {
-            oled_show_connect_status(true);
+            //oled_show_connect_status(true);
             err_code = ble_db_discovery_start(&m_ble_db_discovery,
                                               p_ble_evt->evt.gap_evt.conn_handle);
             APP_ERROR_CHECK(err_code);
@@ -231,7 +231,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
         }
         case BLE_GAP_EVT_DISCONNECTED:
         {
-            oled_show_connect_status(false);
+            //oled_show_connect_status(false);
             scan_start();
             break;
         }
@@ -420,8 +420,6 @@ void system_init(void)
     gpiote_init();
 
     button_init();
-
-    oled_init();
 
     err_code = pstorage_init();
     APP_ERROR_CHECK(err_code);
