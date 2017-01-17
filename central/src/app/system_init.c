@@ -95,7 +95,7 @@ typedef struct
     uint16_t      data_len;                                           /**< Length of data. */
 }data_t;
 
-static bool                         m_memory_access_in_progress = false; /**< Flag to keep track of ongoing operations on persistent memory. */
+//static bool                         m_memory_access_in_progress = false; /**< Flag to keep track of ongoing operations on persistent memory. */
 static ble_gap_scan_params_t        m_scan_param;                        /**< Scan parameters requested for scanning and connection. */
 //static dm_application_instance_t    m_dm_app_id;                         /**< Application identifier. */
 static uint8_t                      m_scan_mode;
@@ -157,18 +157,6 @@ static void scan_start(void)
     ble_gap_addr_t      * p_whitelist_addr[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
     ble_gap_irk_t       * p_whitelist_irk[BLE_GAP_WHITELIST_IRK_MAX_COUNT];
     uint32_t              err_code;
-    uint32_t              count;
-
-    // Verify if there is any flash access pending, if yes delay starting scanning until
-    // it's complete.
-    err_code = pstorage_access_status_get(&count);
-    APP_ERROR_CHECK(err_code);
-
-    if (count != 0)
-    {
-        m_memory_access_in_progress = true;
-        return;
-    }
 
     // Initialize whitelist parameters.
     whitelist.addr_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
@@ -413,7 +401,7 @@ static void gpiote_init(void)
 
 void system_init(void)
 {
-    uint32_t err_code;
+    //uint32_t err_code;
 
     ble_stack_init();
     timers_init();
@@ -421,9 +409,9 @@ void system_init(void)
 
     button_init();
 
-    err_code = pstorage_init();
-    APP_ERROR_CHECK(err_code);
-
+//    err_code = pstorage_init();
+//    APP_ERROR_CHECK(err_code);
+//
     db_discovery_init();
 
     mhs_c_init();
