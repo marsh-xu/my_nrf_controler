@@ -63,10 +63,12 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             {
         case BLE_GAP_EVT_CONNECTED:
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            nrf_gpio_pin_clear(30);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            nrf_gpio_pin_set(30);
             err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
             APP_ERROR_CHECK(err_code);
             break;
@@ -319,6 +321,10 @@ void system_init(void)
     SEGGER_RTT_printf(0, "peripheral init %s\r\n", "started");
 
     motor_init();
+
+    nrf_gpio_cfg_output(30);
+    nrf_gpio_pin_set(30);
+
     //SEGGER_RTT_printf(0, "motor init %s\r\n", "started");
     //heat_control_init();
     //SEGGER_RTT_printf(0, "heat init %s\r\n", "started");
