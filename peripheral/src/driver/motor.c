@@ -16,7 +16,7 @@
 static motor_index_t        m_motor_control_index = MOTOR_INDEX_1;
 static app_timer_id_t       m_motor_control_timer_id;
 
-uint8_t                     m_duty_cycle = 0;
+uint8_t                     m_duty_cycle = 80;
 
 uint8_t motor_enable_pin[MOTOR_NUMBER] =
 {

@@ -14,7 +14,7 @@
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)
 #define MOTOR_NUM                       4
 
-static uint8_t m_motor_speed = 0;
+static uint8_t m_motor_speed = 80;
 static uint8_t m_motor_index = 0;
 static bool is_setting_motor_control = false;
 
@@ -60,11 +60,8 @@ void button_right_event()
 
 void motor_off(void)
 {
-    if (is_setting_motor_control == true)
-    {
-        uint8_t cmd = 0x07;
-        ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
-    }
+    uint8_t cmd = 0x07;
+    ble_mhs_c_send_cmd(&cmd, sizeof(cmd));
 }
 
 void button_clock_event(void)
@@ -120,31 +117,37 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
         {
             case KEY_U_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "UP");
                 button_up_event();
                 break;
             }
             case KEY_D_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "Down");
                 button_down_event();
                 break;
             }
             case KEY_L_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "left");
                 button_left_event();
                 break;
             }
             case KEY_R_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "right");
                 button_right_event();
                 break;
             }
             case KEY_A_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "A");
                 button_clock_event();
                 break;
             }
             case KEY_B_PIN_NUMBER:
             {
+                SEGGER_RTT_printf(0, "pin detected  %s\r\n", "B");
                 button_unclock_event();
                 break;
             }
