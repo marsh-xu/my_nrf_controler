@@ -9,4 +9,6 @@
 #define KEY_L_PIN_NUMBER                                   9  //左
 #define KEY_R_PIN_NUMBER                                   11 //右
 
+#define LED_INDICATOR                                      17
+
 #endif

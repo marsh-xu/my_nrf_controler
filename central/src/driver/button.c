@@ -12,7 +12,10 @@
 #include "button.h"
 
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)
-#define MOTOR_NUM                       4
+#define MOTOR_NUM                       3
+
+static uint8_t m_motor_array[MOTOR_NUM] = {0, 1, 7};
+static int16_t m_motor_array_index = 0;
 
 static uint8_t m_motor_speed = 80;
 static uint8_t m_motor_index = 0;
@@ -48,14 +51,24 @@ void button_down_event()
 
 void button_left_event()
 {
-    m_motor_index --;
-    m_motor_index = m_motor_index % MOTOR_NUM;
+    m_motor_array_index --;
+    if (m_motor_array_index < 0)
+    {
+        m_motor_array_index = MOTOR_NUM - 1;
+    }
+
+    m_motor_index = m_motor_array[m_motor_array_index];
 }
 
 void button_right_event()
 {
-    m_motor_index ++;
-    m_motor_index = m_motor_index % MOTOR_NUM;
+    m_motor_array_index ++;
+    if (m_motor_array_index >= MOTOR_NUM)
+    {
+        m_motor_array_index = 0;
+    }
+
+    m_motor_index = m_motor_array[m_motor_array_index];
 }
 
 void motor_off(void)
@@ -117,6 +130,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
     SEGGER_RTT_printf(0, "pin = %p, event = %p\r\n", pin_no, button_event);
     if (button_event == APP_BUTTON_PUSH)
     {
+        nrf_gpio_pin_set(LED_INDICATOR);
         switch (pin_no)
         {
             case KEY_U_PIN_NUMBER:
@@ -162,6 +176,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_event)
     }
     else if (button_event == APP_BUTTON_RELEASE)
     {
+        nrf_gpio_pin_clear(LED_INDICATOR);
         switch (pin_no)
         {
             case KEY_U_PIN_NUMBER:

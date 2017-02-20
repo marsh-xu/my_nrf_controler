@@ -409,9 +409,9 @@ void system_init(void)
 
     button_init();
 
-//    err_code = pstorage_init();
-//    APP_ERROR_CHECK(err_code);
-//
+    nrf_gpio_cfg_output(LED_INDICATOR);
+    nrf_gpio_pin_clear(LED_INDICATOR);
+
     db_discovery_init();
 
     mhs_c_init();
