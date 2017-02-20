@@ -19,7 +19,7 @@ static app_timer_id_t       m_motor_control_timer_id;
 #define                     DC_MOTOR_ARRAY_SIZE   6
 #define                     DC_MOTOR_INDEX           (MOTOR_NUMBER-1)
 uint8_t                     m_dc_motor_array_index = 0;
-bool                        m_dc_motor_direction = false;
+bool                        m_motor_direction = false;
 uint8_t                     m_dc_motor_array[DC_MOTOR_ARRAY_SIZE] = {5,4,6,2,3,1};
 
 uint8_t                     m_duty_cycle = 80;
@@ -46,26 +46,37 @@ static void motor_control_timeout_handler(void * p_context)
 {
     if (m_motor_control_index != DC_MOTOR_INDEX)
     {
-        if (m_duty_cycle == 0)
+        uint32_t direction_pin_number = MOTOR_IN1_PIN_NUMBER;
+
+        if (m_motor_direction == true)
         {
-            nrf_gpio_pin_clear(motor_enable_pin[m_motor_control_index - MOTOR_INDEX_1]);
-        }
-        else if (m_duty_cycle < 100)
-        {
-            nrf_gpio_pin_set(motor_enable_pin[m_motor_control_index - MOTOR_INDEX_1]);
-            nrf_delay_us(10 * m_duty_cycle);
-            nrf_gpio_pin_clear(motor_enable_pin[m_motor_control_index - MOTOR_INDEX_1]);
+            direction_pin_number = MOTOR_IN1_PIN_NUMBER;
         }
         else
         {
-            nrf_gpio_pin_set(motor_enable_pin[m_motor_control_index - MOTOR_INDEX_1]);
+            direction_pin_number = MOTOR_IN2_PIN_NUMBER;
+        }
+
+        if (m_duty_cycle == 0)
+        {
+            nrf_gpio_pin_clear(motor_enable_pin[m_motor_control_index]);
+        }
+        else if (m_duty_cycle < 100)
+        {
+            nrf_gpio_pin_set(direction_pin_number);
+            nrf_delay_us(10 * m_duty_cycle);
+            nrf_gpio_pin_clear(direction_pin_number);
+        }
+        else
+        {
+            nrf_gpio_pin_set(direction_pin_number);
         }
     }
     else
     {
         uint8_t motor_value = 0;
 
-        if (m_dc_motor_direction == true)
+        if (m_motor_direction == true)
         {
             m_dc_motor_array_index = m_dc_motor_array_index + 1;
         }
@@ -175,6 +186,18 @@ void motor_init(void)
     nrf_gpio_pin_clear(BT_PWM_CL);
 
     create_motor_control_timer();
+#if 0
+    nrf_gpio_pin_set(motor_enable_pin[1]);
+    nrf_gpio_pin_set(MOTOR_IN1_PIN_NUMBER);
+    nrf_gpio_pin_clear(MOTOR_IN2_PIN_NUMBER);
+    while(1);
+#else
+    motor_control_t temp_motor_control;
+    temp_motor_control.motor_index = MOTOR_INDEX_2;
+    temp_motor_control.motor_direction = MOTOR_DIRECTION_CLOCK;
+    motor_on(temp_motor_control);
+    m_duty_cycle = 90;
+#endif
 }
 
 void motor_on(motor_control_t motor_control)
@@ -182,40 +205,28 @@ void motor_on(motor_control_t motor_control)
     for (uint8_t i = 0; i < MOTOR_NUMBER; i++)
     {
         nrf_gpio_pin_clear(motor_enable_pin[i]);
+        nrf_gpio_pin_clear(motor_led_pin[i]);
     }
 
     m_motor_control_index = motor_control.motor_index;
 
     nrf_gpio_pin_set(motor_led_pin[m_motor_control_index]);
+    nrf_gpio_pin_set(motor_enable_pin[m_motor_control_index]);
+    nrf_gpio_pin_clear(MOTOR_IN1_PIN_NUMBER);
+    nrf_gpio_pin_clear(MOTOR_IN2_PIN_NUMBER);
 
     if (m_motor_control_index > MOTOR_NUMBER)
     {
         APP_ERROR_CHECK_BOOL(false);
     }
 
-    if (m_motor_control_index != DC_MOTOR_INDEX)
+    if (motor_control.motor_direction == MOTOR_DIRECTION_CLOCK)
     {
-        if (motor_control.motor_direction == MOTOR_DIRECTION_CLOCK)
-        {
-            nrf_gpio_pin_set(MOTOR_IN1_PIN_NUMBER);
-            nrf_gpio_pin_clear(MOTOR_IN2_PIN_NUMBER);
-        }
-        else
-        {
-            nrf_gpio_pin_set(MOTOR_IN2_PIN_NUMBER);
-            nrf_gpio_pin_clear(MOTOR_IN1_PIN_NUMBER);
-        }
+        m_motor_direction = true;
     }
     else
     {
-        if (motor_control.motor_direction == MOTOR_DIRECTION_CLOCK)
-        {
-            m_dc_motor_direction = true;
-        }
-        else
-        {
-            m_dc_motor_direction = false;
-        }
+        m_motor_direction = false;
     }
 
     start_motor_control_timer();
